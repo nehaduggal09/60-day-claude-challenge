@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Typing Speed Studio</title>
+<style>
+:root{
+  --bg:#15171c;
+  --panel:#1c1f26;
+  --panel-2:#20242c;
+  --line:#2b2f38;
+  --ink:#e9e7e1;
+  --ink-dim:#9aa0ab;
+  --ink-faint:#5c626e;
+  --brass:#d3a25a;
+  --brass-dim:#8a6f43;
+  --blue:#6ea8d8;
+  --red:#e0654f;
+  --green:#7bc99a;
+  --mono:"JetBrains Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  --serif:Georgia,"Iowan Old Style","Palatino Linotype",Palatino,serif;
+  --radius:6px;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+}
+[data-theme="light"]{
+  --bg:#f3f0e8;
+  --panel:#fffdf8;
+  --panel-2:#ece7db;
+  --line:#dcd5c4;
+  --ink:#242119;
+  --ink-dim:#6b6355;
+  --ink-faint:#a89f8c;
+  --brass:#a9762f;
+  --brass-dim:#c99a52;
+  --blue:#2f6ea1;
+  --red:#b8402c;
+  --green:#33794f;
+  --shadow:0 10px 30px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--serif);
+  min-height:100vh;
+  transition:background .35s ease,color .35s ease;
+}
+::selection{background:var(--brass);color:#15171c;}
+.wrap{
+  max-width:1040px;
+  margin:0 auto;
+  padding:28px 20px 60px;
+}
+.top{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  border-bottom:1px solid var(--line);
+  padding-bottom:16px;
+  margin-bottom:22px;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.brand{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+}
+.brand .mark{
+  font-family:var(--mono);
+  font-size:13px;
+  color:var(--brass);
+  border:1px solid var(--brass-dim);
+  padding:3px 7px;
+  border-radius:4px;
+  letter-spacing:.02em;
+}
+.brand h1{
+  font-family:var(--serif);
+  font-weight:400;
+  font-size:26px;
+  margin:0;
+  letter-spacing:.01em;
+}
+.brand h1 em{
+  font-style:italic;
+  color:var(--brass);
+}
+.top-controls{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.icon-btn{
+  background:var(--panel);
+  border:1px solid var(--line);
+  color:var(--ink-dim);
+  width:36px;height:36px;
+  border-radius:var(--radius);
+  cursor:pointer;
+  font-size:15px;
+  display:flex;align-items:center;justify-content:center;
+  transition:border-color .15s,color .15s;
+}
+.icon-btn:hover{border-color:var(--brass-dim);color:var(--ink);}
+.icon-btn:focus-visible, button:focus-visible, select:focus-visible, textarea:focus-visible{
+  outline:2px solid var(--brass);outline-offset:2px;
+}
+
+/* mode bar */
+.modebar{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+.mode-tab{
+  font-family:var(--mono);
+  font-size:12.5px;
+  background:none;
+  border:1px solid transparent;
+  color:var(--ink-faint);
+  padding:7px 12px;
+  border-radius:5px;
+  cursor:pointer;
+  transition:all .15s;
+}
+.mode-tab:hover{color:var(--ink-dim);}
+.mode-tab.active{
+  color:var(--bg);
+  background:var(--brass);
+  font-weight:600;
+}
+
+.subbar{
+  display:flex;
+  gap:18px;
+  flex-wrap:wrap;
+  align-items:center;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:10px 14px;
+  margin-bottom:22px;
+  font-family:var(--mono);
+  font-size:12.5px;
+  color:var(--ink-dim);
+}
+.subbar .group{display:flex;gap:5px;align-items:center;}
+.chip{
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  color:var(--ink-dim);
+  padding:5px 10px;
+  border-radius:4px;
+  cursor:pointer;
+  font-family:var(--mono);
+  font-size:12px;
+}
+.chip.active{background:var(--brass);color:var(--bg);border-color:var(--brass);font-weight:600;}
+.subbar select{
+  background:var(--panel-2);
+  color:var(--ink);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:5px 8px;
+  font-family:var(--mono);
+  font-size:12px;
+}
+.subbar label.switch{display:flex;align-items:center;gap:6px;cursor:pointer;}
+
+/* live stats */
+.stats-row{
+  display:flex;
+  gap:0;
+  margin-bottom:18px;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+  background:var(--panel);
+}
+.stat{
+  flex:1;
+  padding:12px 10px;
+  text-align:center;
+  border-right:1px solid var(--line);
+}
+.stat:last-child{border-right:none;}
+.stat .v{
+  font-family:var(--mono);
+  font-size:22px;
+  font-weight:600;
+  color:var(--brass);
+  line-height:1.1;
+}
+.stat .l{
+  font-family:var(--mono);
+  font-size:10px;
+  color:var(--ink-faint);
+  text-transform:lowercase;
+  margin-top:3px;
+}
+.progress-track{
+  height:3px;
+  background:var(--line);
+  border-radius:2px;
+  overflow:hidden;
+  margin-bottom:22px;
+}
+.progress-fill{
+  height:100%;
+  width:0%;
+  background:var(--brass);
+  transition:width .15s linear;
+}
+
+/* typing area */
+.stage{
+  position:relative;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:34px 30px;
+  margin-bottom:16px;
+  box-shadow:var(--shadow);
+  min-height:170px;
+}
+.stage.paused::after{
+  content:"paused — press any key to resume";
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(21,23,28,.85);
+  font-family:var(--mono);font-size:13px;color:var(--ink-dim);
+  border-radius:var(--radius);
+}
+[data-theme="light"] .stage.paused::after{background:rgba(243,240,232,.9);}
+#textDisplay{
+  font-family:var(--mono);
+  font-size:21px;
+  line-height:1.85;
+  letter-spacing:.01em;
+  color:var(--ink-faint);
+  white-space:pre-wrap;
+  word-wrap:break-word;
+  max-height:9.3em;
+  overflow:hidden;
+  transition:max-height .2s;
+}
+.stage.focus #textDisplay{max-height:1.85em;}
+#textDisplay .ch{position:relative;}
+#textDisplay .ch.correct{color:var(--ink);}
+#textDisplay .ch.incorrect{color:var(--red);background:rgba(224,101,79,.14);border-radius:2px;}
+#textDisplay .ch.current{border-left:2px solid var(--brass);animation:blink 1s step-end infinite;}
+@keyframes blink{50%{border-color:transparent;}}
+#hiddenInput{
+  position:absolute;opacity:0;pointer-events:none;top:0;left:0;height:1px;width:1px;
+}
+.start-hint{
+  font-family:var(--mono);
+  font-size:12px;
+  color:var(--ink-faint);
+  text-align:center;
+  margin-bottom:26px;
+}
+.start-hint kbd{
+  border:1px solid var(--line);
+  border-radius:3px;
+  padding:1px 6px;
+  font-family:var(--mono);
+  background:var(--panel-2);
+}
+
+textarea#customText{
+  width:100%;
+  min-height:110px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  color:var(--ink);
+  border-radius:var(--radius);
+  font-family:var(--mono);
+  font-size:14px;
+  padding:14px;
+  margin-bottom:16px;
+  resize:vertical;
+}
+
+.action-row{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  margin-bottom:8px;
+}
+.btn{
+  font-family:var(--mono);
+  font-size:12.5px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  color:var(--ink-dim);
+  padding:9px 18px;
+  border-radius:var(--radius);
+  cursor:pointer;
+  transition:all .15s;
+}
+.btn:hover{border-color:var(--brass-dim);color:var(--ink);}
+.btn.primary{background:var(--brass);color:var(--bg);border-color:var(--brass);font-weight:600;}
+.btn.primary:hover{filter:brightness(1.08);}
+
+/* results */
+#results{
+  display:none;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:28px;
+  box-shadow:var(--shadow);
+  animation:rise .3s ease;
+}
+@keyframes rise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+#results h2{
+  font-family:var(--serif);
+  font-weight:400;
+  font-size:22px;
+  margin:0 0 4px;
+}
+#results .sub{font-family:var(--mono);font-size:12px;color:var(--ink-faint);margin-bottom:22px;}
+.grid-stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:1px;
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+  margin-bottom:22px;
+}
+.grid-stats .cell{background:var(--panel-2);padding:16px 10px;text-align:center;}
+.grid-stats .cell .v{font-family:var(--mono);font-size:26px;color:var(--brass);font-weight:700;}
+.grid-stats .cell .l{font-family:var(--mono);font-size:10px;color:var(--ink-faint);margin-top:4px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px;}
+@media (max-width:700px){.two-col{grid-template-columns:1fr;}.grid-stats{grid-template-columns:repeat(2,1fr);}}
+.panel-box{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius);padding:16px;}
+.panel-box h3{font-family:var(--mono);font-size:11px;color:var(--ink-faint);text-transform:lowercase;margin:0 0 12px;font-weight:600;}
+canvas{width:100%;display:block;}
+.summary-line{
+  font-family:var(--mono);font-size:12.5px;color:var(--ink-dim);line-height:1.7;
+}
+.summary-line b{color:var(--ink);}
+.badge-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.badge{
+  font-family:var(--mono);font-size:11px;
+  border:1px solid var(--brass-dim);
+  color:var(--brass);
+  padding:4px 9px;
+  border-radius:12px;
+}
+.keys-heat{display:flex;flex-wrap:wrap;gap:5px;}
+.key-chip{
+  font-family:var(--mono);font-size:11px;
+  border:1px solid var(--line);
+  padding:4px 7px;border-radius:4px;color:var(--ink-dim);
+}
+.key-chip.hot{border-color:var(--red);color:var(--red);}
+
+/* history */
+#historyPanel{margin-top:30px;}
+#historyPanel h3{font-family:var(--mono);font-size:12px;color:var(--ink-faint);margin-bottom:10px;font-weight:600;}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);color:var(--ink-dim);}
+th{color:var(--ink-faint);font-weight:600;font-size:10.5px;}
+tr:hover td{color:var(--ink);}
+
+.theme-row{display:flex;gap:6px;}
+.swatch{width:18px;height:18px;border-radius:50%;cursor:pointer;border:2px solid transparent;}
+.swatch.active{border-color:var(--ink);}
+
+footer{
+  text-align:center;
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--ink-faint);
+  margin-top:50px;
+}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body data-theme="dark">
+<div class="wrap">
+
+  <div class="top">
+    <div class="brand">
+      <span class="mark">TSS</span>
+      <h1>Typing Speed <em>Studio</em></h1>
+    </div>
+    <div class="top-controls">
+      <div class="theme-row" role="group" aria-label="Accent color">
+        <button class="swatch active" style="background:#d3a25a" data-accent="#d3a25a" aria-label="Brass accent"></button>
+        <button class="swatch" style="background:#6ea8d8" data-accent="#6ea8d8" aria-label="Blue accent"></button>
+        <button class="swatch" style="background:#7bc99a" data-accent="#7bc99a" aria-label="Green accent"></button>
+        <button class="swatch" style="background:#e0654f" data-accent="#e0654f" aria-label="Red accent"></button>
+      </div>
+      <button class="icon-btn" id="soundToggle" title="Toggle sound" aria-label="Toggle sound">♪</button>
+      <button class="icon-btn" id="themeToggle" title="Toggle light/dark" aria-label="Toggle theme">☾</button>
+    </div>
+  </div>
+
+  <div class="modebar" role="tablist" aria-label="Typing modes">
+    <button class="mode-tab active" data-mode="time">Time</button>
+    <button class="mode-tab" data-mode="words">Words</button>
+    <button class="mode-tab" data-mode="quote">Quote</button>
+    <button class="mode-tab" data-mode="programming">Programming</button>
+    <button class="mode-tab" data-mode="custom">Custom</button>
+    <button class="mode-tab" data-mode="adaptive">Adaptive</button>
+    <button class="mode-tab" data-mode="zen">Zen</button>
+  </div>
+
+  <div class="subbar" id="subbar">
+    <div class="group" id="durationGroup">
+      <span>duration:</span>
+      <button class="chip active" data-val="15">15s</button>
+      <button class="chip" data-val="30">30s</button>
+      <button class="chip" data-val="60">60s</button>
+      <button class="chip" data-val="120">120s</button>
+    </div>
+    <div class="group" id="categoryGroup">
+      <span>category:</span>
+      <select id="categorySelect">
+        <option value="general">General English</option>
+        <option value="academic">Academic</option>
+        <option value="business">Business</option>
+        <option value="medical">Medical</option>
+        <option value="legal">Legal</option>
+        <option value="creative">Creative Writing</option>
+      </select>
+    </div>
+    <div class="group" id="langGroup" style="display:none">
+      <span>language:</span>
+      <select id="langSelect">
+        <option value="javascript">JavaScript</option>
+        <option value="python">Python</option>
+        <option value="html">HTML</option>
+        <option value="css">CSS</option>
+        <option value="java">Java</option>
+        <option value="cpp">C++</option>
+        <option value="sql">SQL</option>
+      </select>
+    </div>
+    <label class="switch"><input type="checkbox" id="focusToggle"> focus mode</label>
+    <div class="group"><span>font</span>
+      <button class="chip" id="fontSmall">A-</button>
+      <button class="chip" id="fontBig">A+</button>
+    </div>
+  </div>
+
+  <textarea id="customText" placeholder="Paste or type your custom practice text here, then press Start…" style="display:none"></textarea>
+
+  <div class="stats-row" id="statsRow">
+    <div class="stat"><div class="v" id="statWpm">0</div><div class="l">wpm</div></div>
+    <div class="stat"><div class="v" id="statRaw">0</div><div class="l">raw wpm</div></div>
+    <div class="stat"><div class="v" id="statAcc">100%</div><div class="l">accuracy</div></div>
+    <div class="stat"><div class="v" id="statCpm">0</div><div class="l">cpm</div></div>
+    <div class="stat"><div class="v" id="statTime">0s</div><div class="l">elapsed</div></div>
+    <div class="stat"><div class="v" id="statMistakes">0</div><div class="l">mistakes</div></div>
+    <div class="stat"><div class="v" id="statStreak">0</div><div class="l">streak</div></div>
+    <div class="stat"><div class="v" id="statLeft">—</div><div class="l">remaining</div></div>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+  <div class="stage" id="stage">
+    <div id="textDisplay" tabindex="0" aria-label="Typing text, click to focus and begin typing"></div>
+    <input id="hiddenInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+  </div>
+  <div class="start-hint">click the text and start typing — <kbd>Tab</kbd>+<kbd>Enter</kbd> restart · <kbd>Esc</kbd> pause</div>
+
+  <div class="action-row">
+    <button class="btn primary" id="restartBtn">Restart</button>
+    <button class="btn" id="newTextBtn">New Text</button>
+    <button class="btn" id="zenStopBtn" style="display:none">Finish Zen Session</button>
+  </div>
+
+  <div id="results">
+    <h2 id="resultsHeadline">Session complete</h2>
+    <div class="sub" id="resultsSub"></div>
+    <div class="grid-stats">
+      <div class="cell"><div class="v" id="rWpm">0</div><div class="l">wpm</div></div>
+      <div class="cell"><div class="v" id="rRaw">0</div><div class="l">raw wpm</div></div>
+      <div class="cell"><div class="v" id="rAcc">0%</div><div class="l">accuracy</div></div>
+      <div class="cell"><div class="v" id="rCons">0%</div><div class="l">consistency</div></div>
+    </div>
+    <div class="two-col">
+      <div class="panel-box">
+        <h3>wpm over time</h3>
+        <canvas id="wpmChart" height="140"></canvas>
+      </div>
+      <div class="panel-box">
+        <h3>character breakdown</h3>
+        <canvas id="charChart" height="140"></canvas>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="panel-box">
+        <h3>performance summary</h3>
+        <div class="summary-line" id="summaryText"></div>
+        <div class="badge-row" id="badgeRow"></div>
+      </div>
+      <div class="panel-box">
+        <h3>commonly mistyped keys</h3>
+        <div class="keys-heat" id="keysHeat"></div>
+      </div>
+    </div>
+    <div class="action-row">
+      <button class="btn primary" id="tryAgainBtn">Try Again</button>
+      <button class="btn" id="newTextBtn2">New Text</button>
+    </div>
+  </div>
+
+  <div id="historyPanel">
+    <h3>session history</h3>
+    <table>
+      <thead><tr><th>date</th><th>mode</th><th>category</th><th>wpm</th><th>accuracy</th><th>duration</th></tr></thead>
+      <tbody id="historyBody"></tbody>
+    </table>
+  </div>
+
+  <footer>Typing Speed Studio — practice data stored locally in your browser only.</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------------- Content banks ---------------- */
+const BANKS = {
+general: [
+"The old lighthouse keeper climbed the spiral stairs each evening, counting the same worn steps he had counted for thirty years, while the sea below muttered its endless argument with the rocks.",
+"She poured two cups of coffee, one for herself and one out of habit, before remembering that the kitchen had been quiet for months now.",
+"A sudden gust rattled the shutters and sent a stack of unopened letters sliding off the table, scattering across the floor like startled birds.",
+"He learned to read the weather in his grandmother's knees long before he trusted any forecast on the radio, and she was rarely wrong.",
+"The market on Saturday mornings smelled of ripe peaches and wet pavement, and the vendors called out prices in a rhythm the whole street seemed to know by heart."
+],
+academic: [
+"The study employed a mixed methods design, combining quantitative survey data with semi structured interviews to triangulate findings across three distinct participant cohorts.",
+"Contemporary research suggests that working memory capacity is not a fixed trait but rather a malleable construct shaped by sustained cognitive training and environmental context.",
+"The hypothesis was tested using a randomized controlled trial, with participants assigned to either the intervention group or a matched control group over a twelve week period.",
+"Scholars continue to debate whether economic growth in developing regions is primarily driven by institutional reform or by exogenous shocks to global commodity prices.",
+"The literature review revealed significant heterogeneity in how prior studies operationalized the dependent variable, complicating any meaningful cross study comparison."
+],
+business: [
+"Following the quarterly review, the leadership team agreed to reallocate marketing spend toward channels demonstrating the strongest return on investment over the past two cycles.",
+"Please find attached the revised proposal, which incorporates feedback from stakeholders and reflects an updated timeline for the product launch in the second quarter.",
+"Our client retention rate improved by eleven percent after we restructured the onboarding process to reduce time to first value for new accounts.",
+"The board expressed cautious optimism about the merger, pending further due diligence on the target company's outstanding liabilities and regulatory exposure.",
+"To remain competitive, the firm must streamline its supply chain and invest in automation, even as short term margins absorb the transition costs."
+],
+medical: [
+"The patient presented with intermittent chest pain, elevated blood pressure, and mild shortness of breath, prompting an immediate electrocardiogram and cardiac enzyme panel.",
+"Adequate hydration and electrolyte balance are essential during recovery, as dehydration can significantly impair renal function and prolong hospital stays.",
+"The prescribed dosage should be administered twice daily with food to minimize gastrointestinal discomfort and improve absorption of the active compound.",
+"Postoperative monitoring focused on signs of infection, including fever, localized swelling, and any discharge from the incision site.",
+"Chronic inflammation has been increasingly linked to a range of conditions, from cardiovascular disease to certain autoimmune disorders, prompting new lines of therapeutic research."
+],
+legal: [
+"The parties hereby agree that any dispute arising under this agreement shall be resolved through binding arbitration in accordance with the rules of the designated tribunal.",
+"The defendant's counsel filed a motion to dismiss, arguing that the plaintiff failed to establish standing under the relevant statutory framework.",
+"This contract shall remain in full force and effect until terminated by either party upon thirty days written notice to the other party.",
+"The court held that the evidence obtained during the search was inadmissible, as it violated the defendant's constitutional protections against unreasonable seizure.",
+"Nothing in this clause shall be construed to waive any right or remedy available to either party under applicable law."
+],
+creative: [
+"Autumn arrived without ceremony that year, slipping in through the cracks of open windows and settling like dust on the shoulders of the town.",
+"The old dog watched the road for a boy who no longer came running down it, and the silence had begun to sound like company.",
+"Somewhere between the second and third glass of wine, she decided to tell the truth, and the room went very still around her.",
+"He kept the letter folded in his coat pocket for so long that the creases became a kind of map, leading nowhere and everywhere at once.",
+"The river did not care that the bridge had fallen; it simply widened its shoulders and carried on, indifferent and patient as always."
+]
+};
+
+const QUOTES = [
+"The only way to do great work is to love what you do.",
+"In the middle of every difficulty lies opportunity.",
+"Simplicity is the ultimate sophistication.",
+"The unexamined life is not worth living.",
+"Whatever you can do, or dream you can, begin it.",
+"We are what we repeatedly do; excellence then is not an act, but a habit.",
+"The mind is everything. What you think you become."
+];
+
+const CODE = {
+javascript:[
+"function debounce(fn, delay) {\n  let timer = null;\n  return function(...args) {\n    clearTimeout(timer);\n    timer = setTimeout(() => fn.apply(this, args), delay);\n  };\n}",
+"const users = await fetch('/api/users')\n  .then(res => res.json())\n  .catch(err => console.error('Failed to load users:', err));",
+"class Stack {\n  constructor() { this.items = []; }\n  push(item) { this.items.push(item); }\n  pop() { return this.items.pop(); }\n}"
+],
+python:[
+"def merge_sort(arr):\n    if len(arr) <= 1:\n        return arr\n    mid = len(arr) // 2\n    left = merge_sort(arr[:mid])\n    right = merge_sort(arr[mid:])\n    return merge(left, right)",
+"class Node:\n    def __init__(self, value):\n        self.value = value\n        self.next = None\n\n    def __repr__(self):\n        return f'Node({self.value})'",
+"with open('data.csv', 'r') as f:\n    reader = csv.DictReader(f)\n    rows = [row for row in reader if row['status'] == 'active']"
+],
+html:[
+"<section class=\"card\">\n  <h2>Recent Orders</h2>\n  <ul>\n    <li>Order #1042 - shipped</li>\n    <li>Order #1043 - pending</li>\n  </ul>\n</section>",
+"<form action=\"/submit\" method=\"post\">\n  <label for=\"email\">Email</label>\n  <input id=\"email\" type=\"email\" name=\"email\" required>\n  <button type=\"submit\">Send</button>\n</form>"
+],
+css:[
+".card {\n  display: flex;\n  flex-direction: column;\n  gap: 12px;\n  padding: 16px;\n  border-radius: 8px;\n  box-shadow: 0 2px 6px rgba(0,0,0,.1);\n}",
+"@media (max-width: 600px) {\n  .nav {\n    flex-direction: column;\n    align-items: flex-start;\n  }\n}"
+],
+java:[
+"public class Rectangle {\n    private double width, height;\n    public Rectangle(double w, double h) {\n        this.width = w;\n        this.height = h;\n    }\n    public double area() {\n        return width * height;\n    }\n}"
+],
+cpp:[
+"#include <vector>\n#include <algorithm>\n\nint main() {\n    std::vector<int> nums = {5, 2, 8, 1};\n    std::sort(nums.begin(), nums.end());\n    return 0;\n}"
+],
+sql:[
+"SELECT customers.name, SUM(orders.total) AS lifetime_value\nFROM customers\nJOIN orders ON orders.customer_id = customers.id\nGROUP BY customers.name\nORDER BY lifetime_value DESC\nLIMIT 10;"
+]
+};
+
+/* ---------------- State ---------------- */
+let state = {
+  mode: "time",
+  duration: 15,
+  wordCount: 25,
+  category: "general",
+  lang: "javascript",
+  focus: false,
+  text: "",
+  chars: [], // {ch, status}
+  pos: 0,
+  mistakes: 0,
+  startTime: null,
+  timerId: null,
+  running: false,
+  paused: false,
+  finished: false,
+  samples: [], // {t, wpm}
+  totalTyped: 0,
+  correctTyped: 0,
+  streak: 0,
+  bestStreak: 0,
+  keyErrors: {},
+  soundOn: true,
+  accent: "#d3a25a"
+};
+
+let audioCtx = null;
+function beep(freq, dur){
+  if(!state.soundOn) return;
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.frequency.value = freq;
+    o.type = "sine";
+    g.gain.value = 0.04;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+    o.stop(audioCtx.currentTime + dur);
+  }catch(e){}
+}
+
+/* ---------------- DOM refs ---------------- */
+const $ = id => document.getElementById(id);
+const textDisplay = $("textDisplay");
+const hiddenInput = $("hiddenInput");
+const stage = $("stage");
+const statWpm = $("statWpm"), statRaw = $("statRaw"), statAcc = $("statAcc"),
+      statCpm = $("statCpm"), statTime = $("statTime"), statMistakes = $("statMistakes"),
+      statStreak = $("statStreak"), statLeft = $("statLeft");
+const progressFill = $("progressFill");
+const customTextArea = $("customText");
+const zenStopBtn = $("zenStopBtn");
+
+/* ---------------- Text generation ---------------- */
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function wordsFromBank(cat, count){
+  const pool = BANKS[cat].join(" ").split(/\s+/);
+  let words = [];
+  while(words.length < count){
+    words = words.concat(pool.sort(()=>Math.random()-0.5));
+  }
+  return words.slice(0,count).join(" ") + ".";
+}
+
+function generateText(){
+  let t = "";
+  if(state.mode === "time"){
+    t = shuffleParagraphs(state.category, 3);
+  } else if(state.mode === "words"){
+    t = wordsFromBank(state.category, state.wordCount);
+  } else if(state.mode === "quote"){
+    t = pick(QUOTES);
+  } else if(state.mode === "programming"){
+    t = pick(CODE[state.lang]);
+  } else if(state.mode === "custom"){
+    t = customTextArea.value.trim() || "Type something in the box above, then press New Text.";
+  } else if(state.mode === "adaptive"){
+    const cats = Object.keys(BANKS);
+    t = shuffleParagraphs(cats[Math.floor(Math.random()*cats.length)], 2);
+  } else if(state.mode === "zen"){
+    t = shuffleParagraphs(state.category, 6);
+  }
+  return t;
+}
+
+function shuffleParagraphs(cat, n){
+  const arr = BANKS[cat].slice().sort(()=>Math.random()-0.5).slice(0, Math.min(n, BANKS[cat].length));
+  return arr.join(" ");
+}
+
+/* ---------------- Rendering ---------------- */
+function buildChars(text){
+  return text.split("").map(ch => ({ch, status:"pending"}));
+}
+
+function render(){
+  textDisplay.innerHTML = state.chars.map((c, i) => {
+    let cls = "ch";
+    if(c.status === "correct") cls += " correct";
+    else if(c.status === "incorrect") cls += " incorrect";
+    if(i === state.pos) cls += " current";
+    const display = c.ch === "\n" ? "\u21B5\n" : c.ch;
+    return `<span class="${cls}">${escapeHtml(display)}</span>`;
+  }).join("");
+}
+function escapeHtml(s){
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+/* ---------------- Session lifecycle ---------------- */
+function newSession(){
+  clearInterval(state.timerId);
+  state.text = generateText();
+  state.chars = buildChars(state.text);
+  state.pos = 0;
+  state.mistakes = 0;
+  state.startTime = null;
+  state.running = false;
+  state.paused = false;
+  state.finished = false;
+  state.samples = [];
+  state.totalTyped = 0;
+  state.correctTyped = 0;
+  state.streak = 0;
+  state.bestStreak = 0;
+  state.keyErrors = {};
+  $("results").style.display = "none";
+  stage.classList.remove("paused");
+  render();
+  updateLiveStats();
+  updateProgress();
+  zenStopBtn.style.display = state.mode === "zen" ? "inline-block" : "none";
+  hiddenInput.value = "";
+  setTimeout(()=>hiddenInput.focus(), 30);
+}
+
+function startTimerIfNeeded(){
+  if(state.running) return;
+  state.running = true;
+  state.startTime = Date.now();
+  state.timerId = setInterval(tick, 250);
+}
+
+function tick(){
+  if(state.paused || state.finished) return;
+  const elapsed = (Date.now() - state.startTime) / 1000;
+  const minutes = elapsed / 60;
+  const wpm = minutes > 0 ? Math.round((state.correctTyped/5) / minutes) : 0;
+  state.samples.push({t: elapsed, wpm: Math.max(0,wpm)});
+  updateLiveStats();
+  updateProgress();
+
+  if(state.mode === "time"){
+    const remain = state.duration - elapsed;
+    statLeft.textContent = Math.max(0, Math.ceil(remain)) + "s";
+    if(remain <= 0) finishSession();
+  } else {
+    statLeft.textContent = state.mode === "zen" ? "∞" : (state.chars.length - state.pos) + " ch";
+  }
+}
+
+function updateProgress(){
+  let pct = 0;
+  if(state.mode === "time" && state.startTime){
+    pct = Math.min(100, ((Date.now()-state.startTime)/1000)/state.duration*100);
+  } else if(state.mode !== "zen"){
+    pct = Math.min(100, (state.pos/state.chars.length)*100);
+  }
+  progressFill.style.width = pct + "%";
+}
+
+function currentWpm(){
+  if(!state.startTime) return 0;
+  const minutes = (Date.now()-state.startTime)/60000;
+  if(minutes<=0) return 0;
+  return Math.min(400, Math.round((state.correctTyped/5)/minutes));
+}
+function currentRaw(){
+  if(!state.startTime) return 0;
+  const minutes = (Date.now()-state.startTime)/60000;
+  if(minutes<=0) return 0;
+  return Math.min(400, Math.round((state.totalTyped/5)/minutes));
+}
+
+function updateLiveStats(){
+  const wpm = currentWpm();
+  const raw = currentRaw();
+  const acc = state.totalTyped>0 ? Math.round((state.correctTyped/state.totalTyped)*100) : 100;
+  const elapsed = state.startTime ? Math.floor((Date.now()-state.startTime)/1000) : 0;
+  statWpm.textContent = wpm;
+  statRaw.textContent = raw;
+  statAcc.textContent = acc + "%";
+  statCpm.textContent = state.startTime ? Math.round(state.correctTyped/Math.max(0.017,(Date.now()-state.startTime)/60000)) : 0;
+  statTime.textContent = elapsed + "s";
+  statMistakes.textContent = state.mistakes;
+  statStreak.textContent = state.streak;
+}
+
+/* ---------------- Input handling ---------------- */
+hiddenInput.addEventListener("keydown", (e)=>{
+  if(state.finished) return;
+  if(state.paused){
+    state.paused = false;
+    stage.classList.remove("paused");
+    return;
+  }
+  if(e.key === "Escape"){
+    if(state.running){
+      state.paused = true;
+      stage.classList.add("paused");
+    }
+    return;
+  }
+  if(e.key === "Tab"){ e.preventDefault(); return; }
+
+  if(e.key === "Backspace"){
+    e.preventDefault();
+    if(state.pos > 0){
+      state.pos--;
+      if(state.chars[state.pos].status === "incorrect") { /* leave mistake counted historically */ }
+      state.chars[state.pos].status = "pending";
+      render();
+    }
+    return;
+  }
+
+  if(e.key.length !== 1 && e.key !== "Enter") return;
+  e.preventDefault();
+
+  startTimerIfNeeded();
+
+  const expected = state.chars[state.pos];
+  if(!expected) return;
+  const typedChar = e.key === "Enter" ? "\n" : e.key;
+
+  state.totalTyped++;
+  if(typedChar === expected.ch){
+    expected.status = "correct";
+    state.correctTyped++;
+    state.streak++;
+    state.bestStreak = Math.max(state.bestStreak, state.streak);
+    beep(720,0.04);
+  } else {
+    expected.status = "incorrect";
+    state.mistakes++;
+    state.streak = 0;
+    const key = expected.ch === " " ? "space" : expected.ch;
+    state.keyErrors[key] = (state.keyErrors[key]||0)+1;
+    beep(160,0.07);
+  }
+  state.pos++;
+  render();
+  updateLiveStats();
+  updateProgress();
+  scrollFocus();
+
+  if(state.mode === "words" || state.mode === "quote" || state.mode === "programming" || state.mode === "custom" || state.mode === "adaptive"){
+    if(state.pos >= state.chars.length) finishSession();
+  }
+});
+
+stage.addEventListener("click", ()=> hiddenInput.focus());
+textDisplay.addEventListener("click", ()=> hiddenInput.focus());
+
+function scrollFocus(){
+  if(!state.focus) return;
+  const lineHeight = 21*1.85;
+  const spans = textDisplay.querySelectorAll(".ch");
+  const cur = spans[state.pos];
+  if(cur){
+    const offsetTop = cur.offsetTop;
+    textDisplay.scrollTop = Math.max(0, offsetTop - 4);
+  }
+}
+
+/* ---------------- Finish & results ---------------- */
+function finishSession(){
+  if(state.finished) return;
+  state.finished = true;
+  state.running = false;
+  clearInterval(state.timerId);
+  const elapsed = state.startTime ? (Date.now()-state.startTime)/1000 : 0;
+  const minutes = Math.max(elapsed/60, 0.017);
+  const wpm = Math.round((state.correctTyped/5)/minutes);
+  const raw = Math.round((state.totalTyped/5)/minutes);
+  const acc = state.totalTyped>0 ? Math.round((state.correctTyped/state.totalTyped)*100) : 100;
+
+  const wpmSeries = state.samples.map(s=>s.wpm);
+  const mean = wpmSeries.length ? wpmSeries.reduce((a,b)=>a+b,0)/wpmSeries.length : wpm;
+  const variance = wpmSeries.length ? wpmSeries.reduce((a,b)=>a+Math.pow(b-mean,2),0)/wpmSeries.length : 0;
+  const stdev = Math.sqrt(variance);
+  const consistency = mean>0 ? Math.max(0, Math.round(100 - (stdev/mean)*100)) : 100;
+
+  const correctChars = state.chars.filter(c=>c.status==="correct").length;
+  const incorrectChars = state.chars.filter(c=>c.status==="incorrect").length;
+  const missedChars = state.chars.filter(c=>c.status==="pending").length;
+  const extraChars = Math.max(0, state.totalTyped - state.chars.length);
+
+  saveSession({
+    date: new Date().toISOString(),
+    mode: state.mode,
+    category: state.mode==="programming" ? state.lang : state.category,
+    wpm, raw, acc,
+    duration: Math.round(elapsed)
+  });
+
+  showResults({wpm, raw, acc, consistency, correctChars, incorrectChars, missedChars, extraChars, elapsed});
+  progressFill.style.width = "100%";
+}
+
+zenStopBtn.addEventListener("click", finishSession);
+
+function showResults(r){
+  $("results").style.display = "block";
+  $("resultsSub").textContent = `${labelForMode()} · ${new Date().toLocaleString()}`;
+  $("rWpm").textContent = r.wpm;
+  $("rRaw").textContent = r.raw;
+  $("rAcc").textContent = r.acc + "%";
+  $("rCons").textContent = r.consistency + "%";
+
+  drawWpmChart(state.samples);
+  drawCharChart(r.correctChars, r.incorrectChars, r.extraChars, r.missedChars);
+
+  const bests = getBests();
+  const key = bestKey();
+  const prevBest = bests[key] || 0;
+  const isPR = r.wpm > prevBest;
+  if(isPR){ bests[key] = r.wpm; localStorage.setItem("tss_bests", JSON.stringify(bests)); }
+
+  $("summaryText").innerHTML =
+    `You typed at <b>${r.wpm} wpm</b> with <b>${r.acc}% accuracy</b> over ${Math.round(r.elapsed)}s. ` +
+    `Consistency was <b>${r.consistency}%</b>, meaning your pace ${r.consistency>80?"stayed very steady":r.consistency>60?"varied moderately":"fluctuated quite a bit"} through the session. ` +
+    `${r.incorrectChars>0 ? `Most errors came from a small set of keys — see the heatmap for details.` : `No mistakes this run — clean pass.`} ` +
+    `${r.wpm < r.raw ? `Your raw speed is a bit ahead of your accurate speed, so slowing down slightly on tricky words may help.` : ``}`;
+
+  const badges = [];
+  if(isPR) badges.push("🏆 New personal best");
+  if(r.acc === 100) badges.push("🎯 Perfect accuracy");
+  if(state.bestStreak >= 50) badges.push("🔥 50+ streak");
+  if(r.consistency >= 90) badges.push("📏 Rock steady");
+  if(r.wpm >= 80) badges.push("⚡ Speed demon");
+  $("badgeRow").innerHTML = badges.map(b=>`<span class="badge">${b}</span>`).join("") || `<span class="badge">Keep practicing</span>`;
+
+  const heat = $("keysHeat");
+  const entries = Object.entries(state.keyErrors).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  heat.innerHTML = entries.length
+    ? entries.map(([k,v])=>`<span class="key-chip hot">${escapeHtml(k)} ×${v}</span>`).join("")
+    : `<span class="key-chip">No repeated mistakes</span>`;
+
+  renderHistory();
+}
+
+function labelForMode(){
+  if(state.mode==="time") return `Time · ${state.duration}s`;
+  if(state.mode==="words") return `Words · ${state.wordCount}`;
+  if(state.mode==="programming") return `Programming · ${state.lang}`;
+  return state.mode.charAt(0).toUpperCase()+state.mode.slice(1);
+}
+function bestKey(){
+  return state.mode + (state.mode==="time"?state.duration:"") + (state.mode==="words"?state.wordCount:"");
+}
+function getBests(){
+  try{ return JSON.parse(localStorage.getItem("tss_bests")||"{}"); }catch(e){ return {}; }
+}
+
+/* ---------------- Charts (canvas, no libs) ---------------- */
+function setupCanvas(canvas){
+  const ratio = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth || 300;
+  const h = canvas.clientHeight || 140;
+  canvas.width = w*ratio; canvas.height = h*ratio;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(ratio,ratio);
+  return {ctx, w, h};
+}
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+function drawWpmChart(samples){
+  const canvas = $("wpmChart");
+  const {ctx,w,h} = setupCanvas(canvas);
+  ctx.clearRect(0,0,w,h);
+  if(!samples.length){
+    ctx.fillStyle = cssVar("--ink-faint"); ctx.font="11px monospace";
+    ctx.fillText("not enough data", 10, h/2);
+    return;
+  }
+  const maxWpm = Math.max(10, ...samples.map(s=>s.wpm));
+  const pad = 20;
+  ctx.strokeStyle = cssVar("--line");
+  ctx.lineWidth = 1;
+  for(let i=0;i<=3;i++){
+    const y = pad + (h-2*pad)*(i/3);
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.strokeStyle = cssVar("--brass");
+  ctx.lineWidth = 2;
+  samples.forEach((s,i)=>{
+    const x = (i/(samples.length-1||1)) * w;
+    const y = h - pad - (s.wpm/maxWpm)*(h-2*pad);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.closePath();
+  ctx.fillStyle = cssVar("--brass").trim()+"22";
+  try{ ctx.fillStyle = hexToRgba(cssVar("--brass"),0.12); }catch(e){}
+  ctx.fill();
+}
+
+function hexToRgba(hex, a){
+  hex = hex.trim();
+  const bigint = parseInt(hex.replace("#",""),16);
+  const r=(bigint>>16)&255, g=(bigint>>8)&255, b=bigint&255;
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function drawCharChart(correct, incorrect, extra, missed){
+  const canvas = $("charChart");
+  const {ctx,w,h} = setupCanvas(canvas);
+  ctx.clearRect(0,0,w,h);
+  const data = [
+    {label:"correct", val:correct, color: cssVar("--green")},
+    {label:"incorrect", val:incorrect, color: cssVar("--red")},
+    {label:"extra", val:extra, color: cssVar("--blue")},
+    {label:"missed", val:missed, color: cssVar("--ink-faint")}
+  ];
+  const total = data.reduce((a,d)=>a+d.val,0) || 1;
+  const barH = 20, gap = 14;
+  let y = 10;
+  data.forEach(d=>{
+    const barW = (d.val/total) * (w-90);
+    ctx.fillStyle = cssVar("--ink-dim"); ctx.font="11px monospace";
+    ctx.fillText(`${d.label}`, 0, y+14);
+    ctx.fillStyle = d.color;
+    ctx.fillRect(70, y, Math.max(2,barW), barH);
+    ctx.fillStyle = cssVar("--ink-dim");
+    ctx.fillText(String(d.val), 76+barW, y+14);
+    y += barH+gap;
+  });
+}
+
+/* ---------------- History / storage ---------------- */
+function saveSession(rec){
+  let hist = [];
+  try{ hist = JSON.parse(localStorage.getItem("tss_history")||"[]"); }catch(e){}
+  hist.unshift(rec);
+  hist = hist.slice(0,50);
+  localStorage.setItem("tss_history", JSON.stringify(hist));
+}
+function renderHistory(){
+  let hist = [];
+  try{ hist = JSON.parse(localStorage.getItem("tss_history")||"[]"); }catch(e){}
+  const body = $("historyBody");
+  body.innerHTML = hist.slice(0,12).map(h=>`
+    <tr>
+      <td>${new Date(h.date).toLocaleDateString()} ${new Date(h.date).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</td>
+      <td>${h.mode}</td>
+      <td>${h.category}</td>
+      <td>${h.wpm}</td>
+      <td>${h.acc}%</td>
+      <td>${h.duration}s</td>
+    </tr>`).join("") || `<tr><td colspan="6">No sessions yet — finish one to see it here.</td></tr>`;
+}
+
+/* ---------------- UI wiring ---------------- */
+document.querySelectorAll(".mode-tab").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".mode-tab").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    state.mode = btn.dataset.mode;
+    applySubbarVisibility();
+    newSession();
+  });
+});
+
+function applySubbarVisibility(){
+  $("durationGroup").style.display = state.mode==="time" ? "flex" : "none";
+  $("categoryGroup").style.display = ["time","adaptive","zen"].includes(state.mode) ? "flex" : "none";
+  $("langGroup").style.display = state.mode==="programming" ? "flex" : "none";
+  customTextArea.style.display = state.mode==="custom" ? "block" : "none";
+  if(state.mode==="words"){
+    $("durationGroup").innerHTML = `<span>words:</span>
+      <button class="chip active" data-val="25">25</button>
+      <button class="chip" data-val="50">50</button>
+      <button class="chip" data-val="100">100</button>
+      <button class="chip" data-val="250">250</button>`;
+    $("durationGroup").style.display = "flex";
+    wireDurationChips(true);
+  } else if(state.mode==="time"){
+    $("durationGroup").innerHTML = `<span>duration:</span>
+      <button class="chip active" data-val="15">15s</button>
+      <button class="chip" data-val="30">30s</button>
+      <button class="chip" data-val="60">60s</button>
+      <button class="chip" data-val="120">120s</button>`;
+    wireDurationChips(false);
+  }
+}
+
+function wireDurationChips(isWords){
+  document.querySelectorAll("#durationGroup .chip").forEach(chip=>{
+    chip.addEventListener("click", ()=>{
+      document.querySelectorAll("#durationGroup .chip").forEach(c=>c.classList.remove("active"));
+      chip.classList.add("active");
+      if(isWords) state.wordCount = parseInt(chip.dataset.val,10);
+      else state.duration = parseInt(chip.dataset.val,10);
+      newSession();
+    });
+  });
+}
+wireDurationChips(false);
+
+$("categorySelect").addEventListener("change", e=>{ state.category = e.target.value; newSession(); });
+$("langSelect").addEventListener("change", e=>{ state.lang = e.target.value; newSession(); });
+$("focusToggle").addEventListener("change", e=>{
+  state.focus = e.target.checked;
+  stage.classList.toggle("focus", state.focus);
+});
+$("fontSmall").addEventListener("click", ()=>adjustFont(-2));
+$("fontBig").addEventListener("click", ()=>adjustFont(2));
+function adjustFont(delta){
+  const cur = parseFloat(getComputedStyle(textDisplay).fontSize);
+  textDisplay.style.fontSize = Math.max(14, Math.min(34, cur+delta)) + "px";
+}
+
+$("restartBtn").addEventListener("click", newSession);
+$("newTextBtn").addEventListener("click", newSession);
+$("newTextBtn2").addEventListener("click", newSession);
+$("tryAgainBtn").addEventListener("click", newSession);
+customTextArea.addEventListener("input", ()=>{ /* applied on New Text / mode switch */ });
+customTextArea.addEventListener("blur", ()=>{ if(state.mode==="custom") newSession(); });
+
+document.addEventListener("keydown", (e)=>{
+  if(e.key === "Tab") { /* handled */ }
+});
+let tabHeld = false;
+document.addEventListener("keydown", e=>{ if(e.key==="Tab") tabHeld = true; });
+document.addEventListener("keyup", e=>{
+  if(e.key==="Tab") tabHeld = false;
+});
+document.addEventListener("keydown", e=>{
+  if(tabHeld && e.key==="Enter"){ e.preventDefault(); newSession(); }
+});
+
+$("themeToggle").addEventListener("click", ()=>{
+  const cur = document.body.getAttribute("data-theme");
+  const next = cur==="dark" ? "light" : "dark";
+  document.body.setAttribute("data-theme", next);
+  $("themeToggle").textContent = next==="dark" ? "☾" : "☀";
+  localStorage.setItem("tss_theme", next);
+});
+$("soundToggle").addEventListener("click", ()=>{
+  state.soundOn = !state.soundOn;
+  $("soundToggle").style.color = state.soundOn ? "" : "var(--red)";
+  $("soundToggle").style.opacity = state.soundOn ? "1" : "0.5";
+});
+document.querySelectorAll(".swatch").forEach(sw=>{
+  sw.addEventListener("click", ()=>{
+    document.querySelectorAll(".swatch").forEach(s=>s.classList.remove("active"));
+    sw.classList.add("active");
+    document.documentElement.style.setProperty("--brass", sw.dataset.accent);
+    document.documentElement.style.setProperty("--brass-dim", sw.dataset.accent+"aa");
+    localStorage.setItem("tss_accent", sw.dataset.accent);
+  });
+});
+
+/* restore preferences */
+(function restorePrefs(){
+  const theme = localStorage.getItem("tss_theme");
+  if(theme){
+    document.body.setAttribute("data-theme", theme);
+    $("themeToggle").textContent = theme==="dark" ? "☾" : "☀";
+  }
+  const accent = localStorage.getItem("tss_accent");
+  if(accent){
+    document.documentElement.style.setProperty("--brass", accent);
+    document.querySelectorAll(".swatch").forEach(s=>{
+      s.classList.toggle("active", s.dataset.accent===accent);
+    });
+  }
+})();
+
+window.addEventListener("resize", ()=>{
+  if($("results").style.display === "block"){
+    drawWpmChart(state.samples);
+  }
+});
+
+/* init */
+applySubbarVisibility();
+newSession();
+renderHistory();
+
+})();
+</script>
+</body>
+</html>
