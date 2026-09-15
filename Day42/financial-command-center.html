@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pocket Ledger — Your Money Command Center</title>
+<style>
+  :root{
+    --paper:#F6F3EC;
+    --paper-2:#EFEADC;
+    --ink:#1B2A4A;
+    --ink-soft:#4C5A78;
+    --gold:#C9A227;
+    --gold-soft:#E7D294;
+    --green:#2F7A5B;
+    --rust:#B4483A;
+    --card:#FFFFFF;
+    --line:#DDD6C4;
+    --radius:14px;
+    --shadow: 0 1px 2px rgba(27,42,74,0.06), 0 6px 18px rgba(27,42,74,0.07);
+  }
+  [data-theme="dark"]{
+    --paper:#12172A;
+    --paper-2:#171E36;
+    --ink:#F1EEE3;
+    --ink-soft:#B9C0D6;
+    --gold:#E4C158;
+    --gold-soft:#4A4023;
+    --green:#59C793;
+    --rust:#E38073;
+    --card:#1B2340;
+    --line:#2B335A;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 22px rgba(0,0,0,0.35);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family: "Iowan Old Style","Palatino Linotype",Georgia,"Times New Roman",serif;
+    -webkit-font-smoothing:antialiased;
+    transition:background .3s ease, color .3s ease;
+  }
+  .sans{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  h1,h2,h3,h4{ font-family: "Iowan Old Style","Palatino Linotype",Georgia,serif; margin:0; }
+  p, div, span, button, input, select { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+  /* ===== Layout shell ===== */
+  .app{ display:flex; min-height:100vh; }
+  .rail{
+    width:230px; flex-shrink:0; background:var(--paper-2);
+    border-right:1px solid var(--line);
+    padding:22px 14px; position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; padding:4px 8px 22px 8px; }
+  .brand .coin{
+    width:34px; height:34px; border-radius:50%;
+    background:linear-gradient(155deg, var(--gold), var(--gold-soft));
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; color:var(--ink); font-size:16px; font-family:serif;
+    box-shadow: inset 0 -3px 6px rgba(0,0,0,0.15);
+  }
+  .brand strong{ font-size:18px; letter-spacing:0.2px; }
+  .brand small{ display:block; color:var(--ink-soft); font-size:11px; }
+
+  nav.modules{ display:flex; flex-direction:column; gap:2px; margin-top:6px; }
+  nav.modules button{
+    all:unset; cursor:pointer; padding:10px 12px; border-radius:10px;
+    color:var(--ink-soft); font-size:14px; display:flex; align-items:center; gap:10px;
+    transition: background .15s ease, color .15s ease;
+  }
+  nav.modules button:hover{ background:rgba(201,162,39,0.12); color:var(--ink); }
+  nav.modules button.active{ background:var(--gold-soft); color:var(--ink); font-weight:600; }
+  nav.modules .icon{ font-size:16px; width:18px; text-align:center; }
+
+  .railfoot{ margin-top:22px; padding:12px; border-top:1px solid var(--line); }
+  .toggle-row{ display:flex; align-items:center; justify-content:space-between; font-size:13px; color:var(--ink-soft); }
+  .switch{ width:38px; height:22px; border-radius:20px; background:var(--line); position:relative; cursor:pointer; }
+  .switch::after{ content:""; position:absolute; width:16px; height:16px; border-radius:50%; background:var(--card); top:3px; left:3px; transition:.2s; box-shadow:0 1px 2px rgba(0,0,0,0.3);}
+  [data-theme="dark"] .switch::after{ left:19px; }
+  .switch.on{ background:var(--ink); }
+
+  main{ flex:1; padding:28px 34px 60px; max-width:1100px; }
+  .topline{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:22px; flex-wrap:wrap; gap:10px;}
+  .topline h1{ font-size:28px; }
+  .topline .sub{ color:var(--ink-soft); font-size:14px; margin-top:4px; }
+  .printbtn{ all:unset; cursor:pointer; border:1px solid var(--line); padding:8px 14px; border-radius:9px; font-size:13px; color:var(--ink-soft); }
+  .printbtn:hover{ color:var(--ink); border-color:var(--gold); }
+
+  .grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:22px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow); }
+  .stat-label{ font-size:12px; color:var(--ink-soft); margin-bottom:6px; }
+  .stat-value{ font-size:26px; font-weight:600; font-family:"Iowan Old Style",Georgia,serif; }
+  .stat-value.green{ color:var(--green); }
+  .stat-value.rust{ color:var(--rust); }
+  .stat-note{ font-size:12px; color:var(--ink-soft); margin-top:4px; }
+
+  section.panel{ display:none; }
+  section.panel.active{ display:block; }
+
+  .row2{ display:grid; grid-template-columns: 1.3fr 1fr; gap:16px; }
+  .row3{ display:grid; grid-template-columns: repeat(3,1fr); gap:16px; }
+
+  .card h3{ font-size:16px; margin-bottom:14px; }
+  .card h4{ font-size:13px; color:var(--ink-soft); font-weight:600; margin-bottom:10px; }
+
+  /* Health score gauge */
+  .score-wrap{ display:flex; align-items:center; gap:22px; }
+  .score-ring{ position:relative; width:120px; height:120px; }
+  .score-num{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; }
+  .score-num b{ font-size:30px; }
+  .score-num span{ font-size:11px; color:var(--ink-soft); }
+
+  /* forms */
+  label{ font-size:12px; color:var(--ink-soft); display:block; margin-bottom:4px; }
+  input, select{
+    width:100%; padding:9px 10px; border-radius:8px; border:1px solid var(--line);
+    background:var(--paper); color:var(--ink); font-size:14px; margin-bottom:10px;
+  }
+  input:focus, select:focus, button:focus-visible{ outline:2px solid var(--gold); outline-offset:1px; }
+  .btn{
+    all:unset; cursor:pointer; background:var(--ink); color:var(--paper); padding:10px 16px;
+    border-radius:9px; font-size:13px; font-weight:600; display:inline-block;
+  }
+  [data-theme="dark"] .btn{ background:var(--gold); color:#1B2340; }
+  .btn.ghost{ background:transparent; color:var(--ink); border:1px solid var(--line); }
+  .btn.small{ padding:6px 10px; font-size:12px; }
+
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{ text-align:left; color:var(--ink-soft); font-weight:600; padding:6px 8px; border-bottom:1px solid var(--line); font-size:12px;}
+  td{ padding:8px; border-bottom:1px solid var(--line); }
+  tr:last-child td{ border-bottom:none; }
+  .tag{ display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; background:var(--paper-2); color:var(--ink-soft); }
+
+  .envelope{ border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+  .envelope .head{ display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px; }
+  .bar{ height:8px; border-radius:6px; background:var(--paper-2); overflow:hidden; }
+  .bar > div{ height:100%; background:var(--green); }
+  .bar.over > div{ background:var(--rust); }
+
+  .streakbox{ display:flex; gap:6px; margin-top:10px; }
+  .day{ width:26px; height:26px; border-radius:7px; background:var(--paper-2); display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--ink-soft); }
+  .day.done{ background:var(--green); color:#fff; }
+
+  .insight{ padding:12px 14px; border-left:3px solid var(--gold); background:var(--paper-2); border-radius:0 10px 10px 0; margin-bottom:10px; font-size:13.5px; line-height:1.5; }
+
+  .checklist label{ display:flex; align-items:flex-start; gap:8px; font-size:13.5px; color:var(--ink); margin-bottom:8px; cursor:pointer; }
+  .checklist input[type=checkbox]{ width:auto; margin:2px 0 0 0; }
+
+  footer.disclaimer{ margin-top:30px; font-size:11.5px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:14px; }
+
+  @media (max-width:900px){
+    .app{ flex-direction:column; }
+    .rail{ width:100%; height:auto; position:relative; display:flex; align-items:center; overflow-x:auto; }
+    nav.modules{ flex-direction:row; }
+    .brand{ padding:4px 12px 4px 0; }
+    .railfoot{ display:none; }
+    .grid{ grid-template-columns:repeat(2,1fr); }
+    .row2, .row3{ grid-template-columns:1fr; }
+    main{ padding:20px; }
+  }
+  @media print{
+    .rail, .printbtn, #whatifPanel, nav.modules{ display:none !important; }
+    main{ max-width:100%; }
+    section.panel{ display:block !important; page-break-after:always; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; animation:none !important; }
+  }
+</style>
+</head>
+<body data-theme="light">
+<div class="app">
+
+  <!-- ===== SIDE RAIL ===== -->
+  <aside class="rail">
+    <div class="brand">
+      <div class="coin">¢</div>
+      <div>
+        <strong>Pocket Ledger</strong>
+        <small>Your money command center</small>
+      </div>
+    </div>
+    <nav class="modules" id="navModules">
+      <button data-panel="overview" class="active"><span class="icon">◆</span>Overview</button>
+      <button data-panel="log"><span class="icon">✎</span>Spending Log</button>
+      <button data-panel="envelopes"><span class="icon">▭</span>Budget Envelopes</button>
+      <button data-panel="goal"><span class="icon">◎</span>Savings Goal</button>
+      <button data-panel="streak"><span class="icon">✓</span>Habit Streak</button>
+      <button data-panel="whatif"><span class="icon">≈</span>What-If Lab</button>
+      <button data-panel="insights"><span class="icon">✦</span>Insights</button>
+      <button data-panel="learn"><span class="icon">▤</span>Tips & Checklist</button>
+    </nav>
+    <div class="railfoot">
+      <div class="toggle-row">
+        <span>Dark mode</span>
+        <div class="switch" id="themeSwitch"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main>
+    <div class="topline">
+      <div>
+        <h1>Good to see you.</h1>
+        <div class="sub">Built for irregular allowance money — track it, envelope it, and build the habit.</div>
+      </div>
+      <button class="printbtn" onclick="window.print()">Print report</button>
+    </div>
+
+    <!-- OVERVIEW -->
+    <section class="panel active" id="overview">
+      <div class="grid">
+        <div class="card">
+          <div class="stat-label">Cash on hand</div>
+          <div class="stat-value" id="ov-cash">₹0</div>
+          <div class="stat-note">All allowance received minus spent</div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Spent this month</div>
+          <div class="stat-value rust" id="ov-spent">₹0</div>
+          <div class="stat-note" id="ov-spent-note">0 log entries</div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Saved toward goal</div>
+          <div class="stat-value green" id="ov-saved">₹0</div>
+          <div class="stat-note" id="ov-goal-note">No goal set yet</div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Budgeting streak</div>
+          <div class="stat-value" id="ov-streak">0 days</div>
+          <div class="stat-note">Log a day to keep it alive</div>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="card">
+          <h3>Financial Health Score</h3>
+          <div class="score-wrap">
+            <div class="score-ring"><canvas id="scoreCanvas" width="120" height="120"></canvas>
+              <div class="score-num"><b id="scoreNum">–</b><span>out of 100</span></div>
+            </div>
+            <div style="flex:1">
+              <div id="scoreExplain" class="sub sans" style="font-size:13px; line-height:1.6;">Add a few log entries and set a savings goal to calculate your score.</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Where it's going</h3>
+          <canvas id="pieCanvas" width="260" height="220"></canvas>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h3>Spending over time</h3>
+        <canvas id="lineCanvas" height="90"></canvas>
+      </div>
+    </section>
+
+    <!-- LOG -->
+    <section class="panel" id="log">
+      <div class="row2">
+        <div class="card">
+          <h3>Add an entry</h3>
+          <label for="entryType">Type</label>
+          <select id="entryType">
+            <option value="income">Money received (allowance)</option>
+            <option value="expense">Money spent</option>
+          </select>
+          <label for="entryAmt">Amount (₹)</label>
+          <input type="number" id="entryAmt" min="0" placeholder="e.g. 200">
+          <label for="entryCat">Category</label>
+          <select id="entryCat">
+            <option>Food & snacks</option>
+            <option>Transport</option>
+            <option>Entertainment</option>
+            <option>Shopping</option>
+            <option>Stationery/books</option>
+            <option>Savings transfer</option>
+            <option>Allowance</option>
+            <option>Other</option>
+          </select>
+          <label for="entryNote">Note (optional)</label>
+          <input type="text" id="entryNote" placeholder="e.g. canteen lunch">
+          <button class="btn" onclick="addEntry()">Add to log</button>
+        </div>
+        <div class="card">
+          <h3>Recent entries</h3>
+          <table id="logTable"><thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Amount</th><th></th></tr></thead>
+          <tbody></tbody></table>
+          <p class="sub sans" style="font-size:12px; margin-top:10px;" id="logEmpty">No entries yet — add your first one.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ENVELOPES -->
+    <section class="panel" id="envelopes">
+      <div class="row2">
+        <div class="card">
+          <h3>Your budget envelopes</h3>
+          <div id="envelopeList"></div>
+        </div>
+        <div class="card">
+          <h3>New envelope</h3>
+          <label for="envName">Category name</label>
+          <input type="text" id="envName" placeholder="e.g. Food & snacks">
+          <label for="envLimit">Monthly limit (₹)</label>
+          <input type="number" id="envLimit" min="0" placeholder="e.g. 800">
+          <button class="btn" onclick="addEnvelope()">Create envelope</button>
+          <p class="sub sans" style="font-size:12px; margin-top:12px;">Envelopes track spend against your "log" entries by matching category name. Spending is pulled automatically from the Spending Log.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- GOAL -->
+    <section class="panel" id="goal">
+      <div class="row2">
+        <div class="card">
+          <h3>Savings goal</h3>
+          <label for="goalName">What are you saving for?</label>
+          <input type="text" id="goalName" placeholder="e.g. new headphones">
+          <label for="goalTarget">Target amount (₹)</label>
+          <input type="number" id="goalTarget" min="0" placeholder="e.g. 3000">
+          <button class="btn" onclick="saveGoal()">Save goal</button>
+          <div id="goalProgressWrap" style="margin-top:18px; display:none;">
+            <div class="head" style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
+              <span id="goalLabel"></span><span id="goalPct"></span>
+            </div>
+            <div class="bar"><div id="goalBar" style="width:0%"></div></div>
+            <p class="sub sans" style="font-size:12px; margin-top:8px;" id="goalRemaining"></p>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Add to savings</h3>
+          <label for="goalAdd">Amount to move into savings (₹)</label>
+          <input type="number" id="goalAdd" min="0" placeholder="e.g. 100">
+          <button class="btn ghost" onclick="addToGoal()">Add to savings</button>
+          <p class="sub sans" style="font-size:12px; margin-top:14px;">This logs a "Savings transfer" expense entry and adds the amount to your goal — so cash on hand and saved amount both stay accurate.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- STREAK -->
+    <section class="panel" id="streak">
+      <div class="card">
+        <h3>Habit streak</h3>
+        <p class="sub sans" style="font-size:13px;">Log at least one entry (income or expense) on a day to keep your streak alive. Since your allowance is irregular, this is about the habit of checking in — not the amount.</p>
+        <div class="streakbox" id="streakDays"></div>
+        <div style="margin-top:14px;">
+          <span class="tag" id="streakBadge">Getting started</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- WHAT-IF -->
+    <section class="panel" id="whatif">
+      <div class="card" id="whatifPanel">
+        <h3>What-if simulator</h3>
+        <p class="sub sans" style="font-size:13px; margin-bottom:14px;">See how small changes could affect your month, based on your logged data so far.</p>
+        <div class="row3">
+          <div>
+            <label for="wiCut">Cut discretionary spend by (%)</label>
+            <input type="range" id="wiCut" min="0" max="80" value="20" oninput="runWhatIf()">
+            <div class="sub sans" style="font-size:12px;" id="wiCutVal">20%</div>
+          </div>
+          <div>
+            <label for="wiSave">Extra weekly saving (₹)</label>
+            <input type="range" id="wiSave" min="0" max="500" value="50" oninput="runWhatIf()">
+            <div class="sub sans" style="font-size:12px;" id="wiSaveVal">₹50</div>
+          </div>
+          <div>
+            <label for="wiWeeks">Weeks to project</label>
+            <input type="range" id="wiWeeks" min="1" max="26" value="8" oninput="runWhatIf()">
+            <div class="sub sans" style="font-size:12px;" id="wiWeeksVal">8 weeks</div>
+          </div>
+        </div>
+        <div class="insight" id="wiResult" style="margin-top:16px;">Move the sliders to see a projection. This is an illustrative scenario based on your own habits, not a prediction.</div>
+      </div>
+    </section>
+
+    <!-- INSIGHTS -->
+    <section class="panel" id="insights">
+      <div class="card">
+        <h3>AI-style insights</h3>
+        <div id="insightsList"></div>
+      </div>
+    </section>
+
+    <!-- LEARN -->
+    <section class="panel" id="learn">
+      <div class="row2">
+        <div class="card">
+          <h3>Quick money tips for students</h3>
+          <div class="insight">Give every rupee a "job" as soon as it arrives — even irregular allowance can go into envelopes the same day you get it.</div>
+          <div class="insight">Track small purchases too. Snacks and impulse buys are usually the biggest silent leak in a student budget.</div>
+          <div class="insight">Aim to move something into savings before you spend on wants — even ₹20 a week builds the habit.</div>
+          <div class="insight">Review your log weekly, not daily — it's less pressure and still keeps you honest.</div>
+        </div>
+        <div class="card">
+          <h3>Budgeting habit checklist</h3>
+          <div class="checklist" id="checklistBox"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <h3>Useful resources</h3>
+        <ul class="sans" style="font-size:13.5px; line-height:1.9; padding-left:18px;">
+          <li>RBI's financial literacy site for students — search "RBI Financial Education"</li>
+          <li>Your bank's student savings account terms, if you have one</li>
+          <li>A simple 50/30/20 split (needs/wants/savings) as a loose starting template</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer class="disclaimer sans">
+      This dashboard is an educational planning tool built from the numbers you enter. It is not financial advice.
+      All data is stored only in your browser's local storage — nothing is sent anywhere.
+    </footer>
+  </main>
+</div>
+
+<script>
+/* ===================== STATE ===================== */
+const STORAGE_KEY = "pocketLedgerState_v1";
+let state = loadState();
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return {
+    entries: [],       // {date, type, category, amount, note}
+    envelopes: [],     // {name, limit}
+    goal: null,         // {name, target, saved}
+    checklist: {},      // id -> bool
+    activityDays: []    // ["2026-09-01", ...]
+  };
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function todayStr(d=new Date()){ return d.toISOString().slice(0,10); }
+function fmt(n){ return "₹" + Math.round(n).toLocaleString("en-IN"); }
+
+/* ===================== NAV ===================== */
+document.querySelectorAll("#navModules button").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll("#navModules button").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll("section.panel").forEach(p=>p.classList.remove("active"));
+    document.getElementById(btn.dataset.panel).classList.add("active");
+    if(btn.dataset.panel==="overview") renderCharts();
+  });
+});
+
+/* ===================== THEME ===================== */
+const themeSwitch = document.getElementById("themeSwitch");
+function applyTheme(dark){
+  document.body.setAttribute("data-theme", dark ? "dark":"light");
+  themeSwitch.classList.toggle("on", dark);
+  localStorage.setItem("pocketLedgerTheme", dark ? "dark":"light");
+  renderCharts();
+}
+themeSwitch.addEventListener("click", ()=> applyTheme(document.body.getAttribute("data-theme")!=="dark"));
+applyTheme(localStorage.getItem("pocketLedgerTheme")==="dark");
+
+/* ===================== ENTRIES / LOG ===================== */
+function markActivity(){
+  const t = todayStr();
+  if(!state.activityDays.includes(t)) state.activityDays.push(t);
+}
+function addEntry(){
+  const type = document.getElementById("entryType").value;
+  const amount = parseFloat(document.getElementById("entryAmt").value);
+  const category = document.getElementById("entryCat").value;
+  const note = document.getElementById("entryNote").value;
+  if(!amount || amount<=0){ alert("Enter an amount greater than 0."); return; }
+  state.entries.push({date: todayStr(), type, category, amount, note});
+  markActivity();
+  saveState();
+  document.getElementById("entryAmt").value="";
+  document.getElementById("entryNote").value="";
+  renderAll();
+}
+function deleteEntry(idx){
+  state.entries.splice(idx,1);
+  saveState();
+  renderAll();
+}
+function renderLog(){
+  const tbody = document.querySelector("#logTable tbody");
+  tbody.innerHTML = "";
+  const sorted = [...state.entries].map((e,i)=>({...e, idx:i})).sort((a,b)=> b.date.localeCompare(a.date));
+  document.getElementById("logEmpty").style.display = sorted.length ? "none":"block";
+  sorted.slice(0,60).forEach(e=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${e.date}</td><td><span class="tag">${e.type==="income"?"received":"spent"}</span></td>
+      <td>${e.category}${e.note? " · "+escapeHtml(e.note):""}</td>
+      <td style="color:${e.type==="income"?"var(--green)":"var(--rust)"}">${e.type==="income"?"+":"-"}${fmt(e.amount)}</td>
+      <td><button class="btn ghost small" onclick="deleteEntry(${e.idx})">Remove</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+function escapeHtml(s){ const d=document.createElement("div"); d.innerText=s; return d.innerHTML; }
+
+/* ===================== ENVELOPES ===================== */
+function addEnvelope(){
+  const name = document.getElementById("envName").value.trim();
+  const limit = parseFloat(document.getElementById("envLimit").value);
+  if(!name || !limit || limit<=0){ alert("Enter a category name and limit."); return; }
+  state.envelopes.push({name, limit});
+  saveState();
+  document.getElementById("envName").value=""; document.getElementById("envLimit").value="";
+  renderEnvelopes();
+}
+function removeEnvelope(idx){ state.envelopes.splice(idx,1); saveState(); renderEnvelopes(); }
+function thisMonthEntries(){
+  const ym = todayStr().slice(0,7);
+  return state.entries.filter(e=> e.date.slice(0,7)===ym);
+}
+function renderEnvelopes(){
+  const box = document.getElementById("envelopeList");
+  box.innerHTML = "";
+  if(!state.envelopes.length){ box.innerHTML = `<p class="sub sans" style="font-size:12px;">No envelopes yet — create one on the right.</p>`; return; }
+  const month = thisMonthEntries();
+  state.envelopes.forEach((env, idx)=>{
+    const spent = month.filter(e=> e.type==="expense" && e.category===env.name).reduce((s,e)=>s+e.amount,0);
+    const pct = Math.min(100, Math.round((spent/env.limit)*100));
+    const over = spent > env.limit;
+    const div = document.createElement("div");
+    div.className = "envelope";
+    div.innerHTML = `<div class="head"><span>${env.name}</span><span>${fmt(spent)} / ${fmt(env.limit)}</span></div>
+      <div class="bar ${over?'over':''}"><div style="width:${pct}%"></div></div>
+      <div style="margin-top:8px; text-align:right;"><button class="btn ghost small" onclick="removeEnvelope(${idx})">Remove</button></div>`;
+    box.appendChild(div);
+  });
+}
+
+/* ===================== GOAL ===================== */
+function saveGoal(){
+  const name = document.getElementById("goalName").value.trim();
+  const target = parseFloat(document.getElementById("goalTarget").value);
+  if(!name || !target || target<=0){ alert("Enter a goal name and target amount."); return; }
+  state.goal = { name, target, saved: state.goal ? state.goal.saved : 0 };
+  saveState();
+  renderGoal();
+}
+function addToGoal(){
+  const amt = parseFloat(document.getElementById("goalAdd").value);
+  if(!state.goal){ alert("Set a savings goal first."); return; }
+  if(!amt || amt<=0){ alert("Enter an amount greater than 0."); return; }
+  state.goal.saved += amt;
+  state.entries.push({date: todayStr(), type:"expense", category:"Savings transfer", amount: amt, note:"to "+state.goal.name});
+  markActivity();
+  saveState();
+  document.getElementById("goalAdd").value="";
+  renderAll();
+}
+function renderGoal(){
+  const wrap = document.getElementById("goalProgressWrap");
+  if(!state.goal){ wrap.style.display="none"; return; }
+  wrap.style.display="block";
+  const pct = Math.min(100, Math.round((state.goal.saved/state.goal.target)*100));
+  document.getElementById("goalLabel").textContent = state.goal.name;
+  document.getElementById("goalPct").textContent = pct+"%";
+  document.getElementById("goalBar").style.width = pct+"%";
+  document.getElementById("goalRemaining").textContent =
+    state.goal.saved >= state.goal.target
+      ? "Goal reached! Consider setting a new one."
+      : fmt(state.goal.target - state.goal.saved) + " left to go.";
+  document.getElementById("goalName").value = state.goal.name;
+  document.getElementById("goalTarget").value = state.goal.target;
+}
+
+/* ===================== STREAK ===================== */
+function computeStreak(){
+  const days = new Set(state.activityDays);
+  let streak = 0;
+  let d = new Date();
+  while(days.has(todayStr(d))){
+    streak++;
+    d.setDate(d.getDate()-1);
+  }
+  return streak;
+}
+function renderStreak(){
+  const streak = computeStreak();
+  document.getElementById("ov-streak").textContent = streak + (streak===1?" day":" days");
+  const box = document.getElementById("streakDays");
+  box.innerHTML = "";
+  const days = new Set(state.activityDays);
+  for(let i=13;i>=0;i--){
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const key = todayStr(d);
+    const el = document.createElement("div");
+    el.className = "day" + (days.has(key) ? " done":"");
+    el.textContent = d.getDate();
+    box.appendChild(el);
+  }
+  const badge = document.getElementById("streakBadge");
+  if(streak>=14) badge.textContent = "Two-week habit — strong!";
+  else if(streak>=7) badge.textContent = "One-week streak — building fast";
+  else if(streak>=3) badge.textContent = "Momentum starting";
+  else badge.textContent = "Getting started";
+}
+
+/* ===================== HEALTH SCORE ===================== */
+function computeScore(){
+  const month = thisMonthEntries();
+  const income = month.filter(e=>e.type==="income").reduce((s,e)=>s+e.amount,0);
+  const spent = month.filter(e=>e.type==="expense").reduce((s,e)=>s+e.amount,0);
+  let score = 50;
+  const reasons = [];
+  if(month.length===0){ return {score:null, reasons:["Log a few entries to calculate your score."]}; }
+
+  if(income>0){
+    const saveRate = state.goal ? Math.min(state.goal.saved / Math.max(income,1), 1) : 0;
+    score += Math.round(saveRate*20);
+    if(saveRate>0.1) reasons.push("You're saving a real slice of what comes in — that adds points.");
+  }
+  if(income>0 && spent>0){
+    const ratio = spent/income;
+    if(ratio<0.7){ score += 15; reasons.push("Spending is comfortably below what you've received this month."); }
+    else if(ratio<1){ score += 5; reasons.push("Spending is close to income — worth watching."); }
+    else { score -= 15; reasons.push("You've spent more than you've received this month."); }
+  }
+  const streak = computeStreak();
+  score += Math.min(streak*1.5, 15);
+  if(streak>=3) reasons.push("Your logging streak is helping build the tracking habit.");
+  if(state.envelopes.length>0){ score += 5; reasons.push("You're using budget envelopes to plan ahead."); }
+
+  score = Math.max(0, Math.min(100, Math.round(score)));
+  return {score, reasons};
+}
+function renderScore(){
+  const {score, reasons} = computeScore();
+  document.getElementById("scoreNum").textContent = score===null ? "–" : score;
+  document.getElementById("scoreExplain").innerHTML = reasons.map(r=>`• ${r}`).join("<br>") || "Add a few log entries and set a savings goal to calculate your score.";
+  const canvas = document.getElementById("scoreCanvas");
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0,0,120,120);
+  const cs = getComputedStyle(document.body);
+  ctx.lineWidth = 10;
+  ctx.strokeStyle = cs.getPropertyValue("--line").trim();
+  ctx.beginPath(); ctx.arc(60,60,50,0,Math.PI*2); ctx.stroke();
+  if(score!==null){
+    ctx.strokeStyle = score>=70 ? cs.getPropertyValue("--green").trim() : score>=40 ? cs.getPropertyValue("--gold").trim() : cs.getPropertyValue("--rust").trim();
+    ctx.beginPath();
+    ctx.arc(60,60,50, -Math.PI/2, -Math.PI/2 + (score/100)*Math.PI*2);
+    ctx.stroke();
+  }
+}
+
+/* ===================== CHARTS ===================== */
+function renderCharts(){
+  renderPie(); renderLine(); renderScore();
+}
+function renderPie(){
+  const canvas = document.getElementById("pieCanvas");
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0,0,canvas.width, canvas.height);
+  const month = thisMonthEntries().filter(e=>e.type==="expense");
+  const byCat = {};
+  month.forEach(e=> byCat[e.category] = (byCat[e.category]||0) + e.amount);
+  const cats = Object.keys(byCat);
+  if(!cats.length){
+    ctx.fillStyle = getComputedStyle(document.body).getPropertyValue("--ink-soft").trim();
+    ctx.font = "13px sans-serif";
+    ctx.fillText("No spending logged this month yet.", 10, 110);
+    return;
+  }
+  const total = cats.reduce((s,c)=>s+byCat[c],0);
+  const colors = ["#C9A227","#2F7A5B","#B4483A","#4C5A78","#8C6D1F","#7A9E8E","#A65D4E","#3B4A6B"];
+  let start = -Math.PI/2;
+  const cx=90, cy=100, r=80;
+  cats.forEach((c,i)=>{
+    const slice = (byCat[c]/total)*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,start,start+slice);
+    ctx.closePath();
+    ctx.fillStyle = colors[i%colors.length];
+    ctx.fill();
+    start += slice;
+  });
+  // legend
+  let ly = 15;
+  ctx.font = "11px sans-serif";
+  cats.forEach((c,i)=>{
+    ctx.fillStyle = colors[i%colors.length];
+    ctx.fillRect(190, ly, 9, 9);
+    ctx.fillStyle = getComputedStyle(document.body).getPropertyValue("--ink").trim();
+    ctx.fillText(c.length>14? c.slice(0,13)+"…":c, 203, ly+9);
+    ly += 18;
+  });
+}
+function renderLine(){
+  const canvas = document.getElementById("lineCanvas");
+  const parent = canvas.parentElement;
+  canvas.width = parent.clientWidth - 36;
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0,0,canvas.width, canvas.height);
+  const days = [];
+  for(let i=13;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); days.push(todayStr(d)); }
+  const totals = days.map(d => state.entries.filter(e=>e.date===d && e.type==="expense").reduce((s,e)=>s+e.amount,0));
+  const max = Math.max(...totals, 1);
+  const w = canvas.width, h = canvas.height, pad=20;
+  const stepX = (w-pad*2)/(days.length-1);
+  ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue("--line").trim();
+  ctx.beginPath(); ctx.moveTo(pad, h-pad); ctx.lineTo(w-pad, h-pad); ctx.stroke();
+  ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue("--rust").trim();
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  totals.forEach((t,i)=>{
+    const x = pad + i*stepX;
+    const y = h - pad - (t/max)*(h-pad*2);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  ctx.fillStyle = getComputedStyle(document.body).getPropertyValue("--rust").trim();
+  totals.forEach((t,i)=>{
+    const x = pad + i*stepX;
+    const y = h - pad - (t/max)*(h-pad*2);
+    ctx.beginPath(); ctx.arc(x,y,2.5,0,Math.PI*2); ctx.fill();
+  });
+}
+
+/* ===================== WHAT-IF ===================== */
+function runWhatIf(){
+  const cut = parseInt(document.getElementById("wiCut").value);
+  const extraSave = parseInt(document.getElementById("wiSave").value);
+  const weeks = parseInt(document.getElementById("wiWeeks").value);
+  document.getElementById("wiCutVal").textContent = cut+"%";
+  document.getElementById("wiSaveVal").textContent = "₹"+extraSave;
+  document.getElementById("wiWeeksVal").textContent = weeks+" weeks";
+
+  const month = thisMonthEntries().filter(e=>e.type==="expense" && e.category!=="Savings transfer");
+  const weeklyAvg = month.reduce((s,e)=>s+e.amount,0) / 4.3 || 0;
+  const newWeekly = weeklyAvg * (1 - cut/100);
+  const freedPerWeek = weeklyAvg - newWeekly;
+  const totalExtra = (freedPerWeek + extraSave) * weeks;
+
+  document.getElementById("wiResult").innerHTML =
+    weeklyAvg===0
+    ? "Log some spending first so the simulator has real numbers to work with."
+    : `As an illustrative scenario — not a prediction — cutting discretionary spend by ${cut}% and adding ${fmt(extraSave)}/week could free up roughly <strong>${fmt(totalExtra)}</strong> over ${weeks} weeks, based on your current average weekly spend of ${fmt(weeklyAvg)}.`;
+}
+
+/* ===================== INSIGHTS ===================== */
+function renderInsights(){
+  const box = document.getElementById("insightsList");
+  const month = thisMonthEntries();
+  const spentByCat = {};
+  month.filter(e=>e.type==="expense").forEach(e=> spentByCat[e.category]=(spentByCat[e.category]||0)+e.amount);
+  const topCat = Object.entries(spentByCat).sort((a,b)=>b[1]-a[1])[0];
+  const insights = [];
+
+  if(!month.length){
+    insights.push("Once you log a few entries, this space will fill up with observations about your habits.");
+  } else {
+    if(topCat) insights.push(`Your biggest spending category this month is <strong>${topCat[0]}</strong> at ${fmt(topCat[1])}.`);
+    const streak = computeStreak();
+    if(streak>=3) insights.push(`You've logged something ${streak} days in a row — that consistency matters more than the amounts.`);
+    else insights.push("Try logging every day this week, even small amounts — consistency builds the budgeting habit faster than big one-off entries.");
+    state.envelopes.forEach(env=>{
+      const spent = month.filter(e=>e.type==="expense" && e.category===env.name).reduce((s,e)=>s+e.amount,0);
+      if(spent > env.limit) insights.push(`You're over your <strong>${env.name}</strong> envelope by ${fmt(spent-env.limit)} this month.`);
+      else if(spent > env.limit*0.8) insights.push(`You're close to your <strong>${env.name}</strong> limit — ${fmt(env.limit-spent)} left.`);
+    });
+    if(state.goal && state.goal.saved < state.goal.target){
+      insights.push(`You're ${Math.round((state.goal.saved/state.goal.target)*100)}% of the way to "${state.goal.name}".`);
+    }
+  }
+  box.innerHTML = insights.map(i=>`<div class="insight">${i}</div>`).join("");
+}
+
+/* ===================== CHECKLIST ===================== */
+const CHECKLIST_ITEMS = [
+  {id:"c1", label:"Log money the same day you receive or spend it"},
+  {id:"c2", label:"Set up at least one budget envelope"},
+  {id:"c3", label:"Set a savings goal, even a small one"},
+  {id:"c4", label:"Check your Overview tab once a week"},
+  {id:"c5", label:"Move something into savings before spending on wants"},
+];
+function renderChecklist(){
+  const box = document.getElementById("checklistBox");
+  box.innerHTML = CHECKLIST_ITEMS.map(item=>`
+    <label>
+      <input type="checkbox" ${state.checklist[item.id]?"checked":""} onchange="toggleChecklist('${item.id}', this.checked)">
+      <span>${item.label}</span>
+    </label>`).join("");
+}
+function toggleChecklist(id, val){ state.checklist[id]=val; saveState(); }
+
+/* ===================== OVERVIEW STATS ===================== */
+function renderOverviewStats(){
+  const income = state.entries.filter(e=>e.type==="income").reduce((s,e)=>s+e.amount,0);
+  const spentAll = state.entries.filter(e=>e.type==="expense").reduce((s,e)=>s+e.amount,0);
+  const cash = income - spentAll;
+  const month = thisMonthEntries();
+  const spentMonth = month.filter(e=>e.type==="expense").reduce((s,e)=>s+e.amount,0);
+
+  document.getElementById("ov-cash").textContent = fmt(cash);
+  document.getElementById("ov-spent").textContent = fmt(spentMonth);
+  document.getElementById("ov-spent-note").textContent = month.filter(e=>e.type==="expense").length + " log entries this month";
+  document.getElementById("ov-saved").textContent = state.goal ? fmt(state.goal.saved) : "₹0";
+  document.getElementById("ov-goal-note").textContent = state.goal ? `Toward "${state.goal.name}"` : "No goal set yet";
+}
+
+/* ===================== RENDER ALL ===================== */
+function renderAll(){
+  renderLog();
+  renderEnvelopes();
+  renderGoal();
+  renderStreak();
+  renderOverviewStats();
+  renderInsights();
+  renderChecklist();
+  runWhatIf();
+  renderCharts();
+}
+window.addEventListener("resize", renderCharts);
+renderAll();
+</script>
+</body>
+</html>
