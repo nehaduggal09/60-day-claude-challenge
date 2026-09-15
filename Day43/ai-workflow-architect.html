@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workflow Architect — E-Commerce Platform Build</title>
+<style>
+  :root{
+    --bg: #0d1117;
+    --bg-panel: #131a24;
+    --bg-raised: #182233;
+    --line: #263143;
+    --text: #dbe4f0;
+    --text-dim: #8394ab;
+    --accent: #4fd1c5;
+    --accent-soft: rgba(79,209,197,.14);
+    --amber: #e8a33d;
+    --danger: #e8637a;
+    --radius: 3px;
+    --mono: 'SF Mono', 'Fira Code', ui-monospace, Menlo, Consolas, monospace;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  [data-theme="light"]{
+    --bg: #f2f4f2;
+    --bg-panel: #ffffff;
+    --bg-raised: #fbfbfa;
+    --line: #dadfe3;
+    --text: #14181d;
+    --text-dim: #5c6773;
+    --accent: #0f8f83;
+    --accent-soft: rgba(15,143,131,.10);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--bg); color:var(--text); font-family:var(--sans);
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--accent-soft);}
+  a{color:var(--accent);}
+  h1,h2,h3,h4{font-weight:600; letter-spacing:-0.01em; margin:0;}
+  code, .mono{font-family:var(--mono);}
+
+  /* Top bar */
+  .topbar{
+    position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px; background:var(--bg-panel); border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{width:22px; height:22px; border:1.5px solid var(--accent); border-radius:2px; position:relative; flex-shrink:0;}
+  .brand-mark::before{content:''; position:absolute; inset:4px; background:var(--accent); border-radius:1px;}
+  .brand-text{font-size:14px; font-weight:600;}
+  .brand-sub{font-size:11px; color:var(--text-dim); font-family:var(--mono);}
+  .top-actions{display:flex; gap:8px; align-items:center;}
+  .btn{
+    font-family:var(--sans); font-size:12.5px; padding:7px 13px; border-radius:var(--radius);
+    border:1px solid var(--line); background:var(--bg-raised); color:var(--text); cursor:pointer;
+    transition:border-color .15s, color .15s;
+  }
+  .btn:hover{border-color:var(--accent); color:var(--accent);}
+  .btn.primary{background:var(--accent); color:#04201c; border-color:var(--accent); font-weight:600;}
+  .btn.primary:hover{opacity:.88; color:#04201c;}
+
+  /* Progress rail */
+  .progress-rail{position:sticky; top:53px; z-index:40; background:var(--bg); border-bottom:1px solid var(--line); padding:10px 24px; display:flex; align-items:center; gap:14px;}
+  .progress-track{flex:1; height:5px; background:var(--line); border-radius:3px; overflow:hidden;}
+  .progress-fill{height:100%; background:var(--accent); width:0%; transition:width .4s ease;}
+  .progress-label{font-size:11px; font-family:var(--mono); color:var(--text-dim); white-space:nowrap;}
+
+  .wrap{max-width:1180px; margin:0 auto; padding:0 24px;}
+
+  /* Hero */
+  .hero{padding:64px 0 44px; border-bottom:1px solid var(--line);}
+  .hero-eyebrow{font-family:var(--mono); font-size:12px; color:var(--accent); margin-bottom:14px;}
+  .hero h1{font-size:38px; line-height:1.15; max-width:760px;}
+  .hero p.lede{color:var(--text-dim); font-size:15.5px; max-width:620px; margin-top:14px;}
+  .hero-meta{display:flex; gap:28px; margin-top:32px; flex-wrap:wrap;}
+  .hero-meta div{font-size:13px;}
+  .hero-meta .k{color:var(--text-dim); font-family:var(--mono); font-size:11px; display:block; margin-bottom:3px;}
+
+  /* Nav pills for stages */
+  .stage-nav{display:flex; gap:6px; flex-wrap:wrap; padding:20px 0; border-bottom:1px solid var(--line);}
+  .stage-pill{
+    font-size:12px; font-family:var(--mono); padding:6px 11px; border-radius:14px; border:1px solid var(--line);
+    background:var(--bg-panel); color:var(--text-dim); cursor:pointer; white-space:nowrap; transition:all .15s;
+  }
+  .stage-pill.done{border-color:var(--accent); color:var(--accent);}
+  .stage-pill:hover{color:var(--text);}
+
+  /* Stage cards */
+  .stage{padding:52px 0; border-bottom:1px solid var(--line);}
+  .stage-head{display:flex; justify-content:space-between; align-items:flex-start; gap:20px; margin-bottom:8px;}
+  .stage-num{font-family:var(--mono); color:var(--accent); font-size:13px;}
+  .stage h2{font-size:25px; margin-top:6px;}
+  .stage-time{font-family:var(--mono); font-size:11px; color:var(--text-dim); border:1px solid var(--line); padding:5px 10px; border-radius:12px; white-space:nowrap;}
+  .stage-desc{color:var(--text-dim); font-size:14.5px; max-width:680px; margin:10px 0 26px;}
+
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:28px;}
+  @media (max-width:800px){.grid2{grid-template-columns:1fr;}}
+
+  .block{margin-bottom:22px;}
+  .block h4{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-dim); font-family:var(--mono); margin-bottom:10px; font-weight:600;}
+  .block ul{margin:0; padding-left:18px;}
+  .block li{margin-bottom:6px; font-size:14px;}
+  .task-list li{list-style:none; padding-left:26px; position:relative; margin-bottom:8px; font-size:14px; cursor:pointer;}
+  .task-list li::before{
+    content:''; position:absolute; left:0; top:2px; width:15px; height:15px; border:1.5px solid var(--line);
+    border-radius:3px; transition:all .15s;
+  }
+  .task-list li.checked{color:var(--text-dim); text-decoration:line-through;}
+  .task-list li.checked::before{background:var(--accent); border-color:var(--accent);}
+  .task-list li.checked::after{content:'✓'; position:absolute; left:2.5px; top:-1.5px; font-size:11px; color:#04201c;}
+
+  .tool-card{background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin-bottom:12px;}
+  .tool-card .tname{font-weight:600; font-size:14.5px; display:flex; justify-content:space-between; align-items:center;}
+  .tag{font-family:var(--mono); font-size:10px; background:var(--accent-soft); color:var(--accent); padding:2px 7px; border-radius:9px;}
+  .tool-card .twhy{font-size:13px; color:var(--text-dim); margin-top:6px;}
+  .tool-card .talt{font-size:12px; margin-top:8px; padding-top:8px; border-top:1px dashed var(--line); color:var(--text-dim);}
+
+  .prompt-box{
+    background:#080b10; border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px;
+    font-family:var(--mono); font-size:12.5px; color:#b8f0e8; position:relative; white-space:pre-wrap; margin-bottom:10px;
+  }
+  [data-theme="light"] .prompt-box{background:#0e1a18; color:#8ff0e2;}
+  .copy-btn{
+    position:absolute; top:8px; right:8px; font-family:var(--sans); font-size:10.5px; padding:3px 8px;
+    background:var(--bg-raised); border:1px solid var(--line); color:var(--text-dim); border-radius:3px; cursor:pointer;
+  }
+  .copy-btn:hover{color:var(--accent); border-color:var(--accent);}
+
+  .mistake{color:var(--danger);}
+  .mistake::marker{color:var(--danger);}
+
+  .outputs-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;}
+  .chip{font-size:12px; font-family:var(--mono); border:1px solid var(--line); padding:4px 10px; border-radius:12px; color:var(--text-dim);}
+
+  .notes-area{width:100%; min-height:64px; background:var(--bg-panel); border:1px solid var(--line); color:var(--text);
+    border-radius:var(--radius); padding:10px; font-family:var(--sans); font-size:13px; resize:vertical;}
+  .notes-area:focus{outline:none; border-color:var(--accent);}
+
+  .bookmark-btn{background:none; border:none; cursor:pointer; color:var(--text-dim); font-size:16px; padding:4px;}
+  .bookmark-btn.active{color:var(--amber);}
+
+  /* Decision tree */
+  .tree{background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius); padding:20px; margin-top:10px;}
+  .tree-q{font-size:14px; font-weight:600; margin-bottom:12px;}
+  .tree-opts{display:flex; gap:10px; flex-wrap:wrap;}
+  .tree-opt{font-size:12.5px; padding:8px 14px; border:1px solid var(--line); border-radius:var(--radius); cursor:pointer; background:var(--bg-raised);}
+  .tree-opt:hover{border-color:var(--accent);}
+  .tree-result{margin-top:14px; padding:12px; background:var(--accent-soft); border-radius:var(--radius); font-size:13.5px; display:none;}
+  .tree-result.show{display:block;}
+  .tree-path{font-family:var(--mono); font-size:11px; color:var(--text-dim); margin-top:10px;}
+
+  /* Comparison table */
+  table.cmp{width:100%; border-collapse:collapse; margin-top:10px; font-size:13px;}
+  table.cmp th, table.cmp td{border:1px solid var(--line); padding:9px 11px; text-align:left;}
+  table.cmp th{background:var(--bg-panel); font-family:var(--mono); font-size:11px; color:var(--text-dim); font-weight:600;}
+  table.cmp td.good{color:var(--accent);}
+
+  /* Diagram */
+  .diagram{display:flex; align-items:center; gap:0; overflow-x:auto; padding:24px 0;}
+  .dnode{
+    flex-shrink:0; min-width:130px; text-align:center; padding:14px 12px; background:var(--bg-panel);
+    border:1px solid var(--line); border-radius:var(--radius); font-size:12.5px; cursor:pointer; transition:border-color .15s;
+  }
+  .dnode:hover, .dnode.active{border-color:var(--accent); color:var(--accent);}
+  .darrow{flex-shrink:0; width:34px; text-align:center; color:var(--text-dim); font-family:var(--mono);}
+
+  /* Summary section */
+  .summary{padding:60px 0;}
+  .summary h2{font-size:28px; margin-bottom:6px;}
+  .summary-sub{color:var(--text-dim); font-size:14px; margin-bottom:34px;}
+  .stack-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px; margin-top:16px;}
+  .stack-item{background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px;}
+  .stack-item .role{font-family:var(--mono); font-size:10.5px; color:var(--accent); text-transform:uppercase;}
+  .stack-item .pick{font-weight:600; margin-top:4px; font-size:14px;}
+
+  .res-grid{display:grid; grid-template-columns:1fr 1fr; gap:30px; margin-top:10px;}
+  @media (max-width:800px){.res-grid{grid-template-columns:1fr;}}
+  .kw-list{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
+  .kw{font-family:var(--mono); font-size:11.5px; border:1px solid var(--line); padding:5px 10px; border-radius:12px; color:var(--text-dim);}
+
+  footer{padding:30px 24px; text-align:center; color:var(--text-dim); font-size:12px; border-top:1px solid var(--line);}
+
+  @media print{
+    .topbar, .progress-rail, .stage-nav, .btn, .copy-btn, .bookmark-btn, .tree, .notes-area{display:none !important;}
+    body{background:#fff; color:#000;}
+    .stage{border:none; page-break-inside:avoid;}
+  }
+  section[id]{scroll-margin-top:110px;}
+</style>
+</head>
+<body data-theme="dark">
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div>
+      <div class="brand-text">Workflow Architect</div>
+      <div class="brand-sub">full-stack · e-commerce build</div>
+    </div>
+  </div>
+  <div class="top-actions">
+    <button class="btn" id="themeToggle">Light mode</button>
+    <button class="btn" onclick="window.print()">Print guide</button>
+    <button class="btn primary" id="resetBtn">Reset progress</button>
+  </div>
+</div>
+
+<div class="progress-rail">
+  <span class="progress-label">PROGRESS</span>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <span class="progress-label" id="progressPct">0%</span>
+</div>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-eyebrow">// FULL-STACK DEVELOPMENT → E-COMMERCE PLATFORM → SOLO TECHNICAL FOUNDER</div>
+    <h1>Ship a general multi-category store, end to end.</h1>
+    <p class="lede">A complete build path from first spec to first sale — the stages, the AI tools that actually pull weight at each one, the prompts to start with, and the traps that cost solo founders the most time.</p>
+    <div class="hero-meta">
+      <div><span class="k">SCOPE</span>Multi-category store, Shopify-alternative pattern</div>
+      <div><span class="k">BUILDER</span>Solo technical founder</div>
+      <div><span class="k">STAGES</span>8</div>
+      <div><span class="k">EST. TOTAL TIME</span>7–11 weeks, part-time</div>
+    </div>
+  </div>
+
+  <div class="stage-nav" id="stageNav"></div>
+
+  <div id="stagesContainer"></div>
+
+  <section class="summary" id="summary">
+    <h2>Workflow summary</h2>
+    <p class="summary-sub">The whole build, compressed to one path.</p>
+    <p style="font-size:14.5px; max-width:760px; color:var(--text);">
+      You're building a multi-category storefront alone, which means the highest-leverage move is letting AI absorb the parts that don't need your judgment — boilerplate CRUD, component scaffolding, test writing, migration scripts, copy — so your own hours go to the handful of decisions that actually shape the product: data model, checkout reliability, and what makes the store worth shopping at over the incumbents. Treat each stage below as a checkpoint, not a phase you fully finish before moving on; backend and frontend in particular should run in parallel once the API contract is settled.
+    </p>
+
+    <h3 style="margin-top:34px; font-size:16px;">Recommended AI stack</h3>
+    <div class="stack-grid" id="stackGrid"></div>
+
+    <div class="res-grid">
+      <div>
+        <h3 style="font-size:16px; margin-top:34px;">Learning resources</h3>
+        <ul id="learnList" style="font-size:13.5px; padding-left:18px;"></ul>
+        <h3 style="font-size:16px; margin-top:26px;">Communities</h3>
+        <ul id="commList" style="font-size:13.5px; padding-left:18px;"></ul>
+      </div>
+      <div>
+        <h3 style="font-size:16px; margin-top:34px;">Search keywords</h3>
+        <div class="kw-list" id="kwList"></div>
+        <h3 style="font-size:16px; margin-top:26px;">Future automation opportunities</h3>
+        <ul id="futureList" style="font-size:13.5px; padding-left:18px;"></ul>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px; margin-top:34px;">Additional AI prompts worth saving</h3>
+    <div id="extraPrompts"></div>
+  </section>
+</div>
+
+<footer>Workflow Architect — generated for a solo technical founder building a full-stack e-commerce platform. Notes and progress are stored locally in your browser only.</footer>
+
+<script>
+const STORAGE_KEY = 'wfa_ecommerce_v1';
+
+const stages = [
+  {
+    id:'discovery', num:'01', time:'3–5 days',
+    title:'Discovery & Scope Definition',
+    desc:'Turn "I want to build a store" into a spec you can actually execute against — before any code exists.',
+    objectives:[
+      'Define the product catalog structure (categories, variants, attributes)',
+      'Pin down MVP feature boundaries vs. post-launch backlog',
+      'Choose the business model details: shipping, tax, returns policy',
+      'Draft user flows for buyer and admin sides'
+    ],
+    tasks:[
+      'Write a one-page PRD covering must-have vs nice-to-have features',
+      'List every entity your data model needs (product, variant, order, customer, cart...)',
+      'Sketch the core user journeys: browse → cart → checkout → order status',
+      'Decide build-vs-buy for payments, shipping, and search early — it shapes everything downstream'
+    ],
+    tools:[
+      {name:'Claude', tag:'Planning & docs', why:'Strong at structuring ambiguous product requirements into a clear PRD and surfacing edge cases you haven\'t considered yet (backorders, partial refunds, guest checkout).', alt:'ChatGPT, Notion AI'},
+      {name:'Figma + AI wireframe plugins', tag:'Flows', why:'Fast to rough out user journeys visually before committing to a data model, which is far cheaper to change here than in code.', alt:'Whimsical, Excalidraw'},
+    ],
+    prompts:[
+      'Act as a senior product manager. I\'m a solo technical founder building a general multi-category e-commerce store. Draft a one-page PRD covering: core entities, MVP feature list, explicitly out-of-scope items for v1, and the 5 riskiest assumptions I should validate first.',
+      'List every edge case a multi-category e-commerce data model needs to handle for products, variants, inventory, and orders — things solo builders typically miss.'
+    ],
+    bestPractices:['Write the PRD before opening an IDE — it will save more time than it costs','Scope the catalog structure (categories/variants/attributes) before choosing your DB schema','Decide now whether you need multi-currency/multi-language — retrofitting is expensive'],
+    mistakes:['Starting to code before deciding how variants (size/color) are modeled','Treating "MVP" as "everything, but smaller" instead of a real cut of scope','Skipping tax/shipping policy decisions until checkout is already built'],
+    outputs:['One-page PRD','Entity list / rough ER diagram','User flow sketches'],
+    tips:'Feed your PRD draft back to Claude and ask it to poke holes in the data model specifically — this is the cheapest stage to catch modeling mistakes.'
+  },
+  {
+    id:'architecture', num:'02', time:'4–6 days',
+    title:'Architecture & Tech Stack Design',
+    desc:'Lock the technical foundation: framework, database, hosting, and the API contract between frontend and backend.',
+    objectives:[
+      'Select frontend framework, backend framework, and database',
+      'Design the core schema (products, variants, inventory, orders, users)',
+      'Define the API contract (REST or GraphQL) before either side is built',
+      'Plan auth, sessions, and cart persistence strategy'
+    ],
+    tasks:[
+      'Choose stack: e.g. React/Next.js frontend, Node/Postgres or similar backend',
+      'Draft the database schema with AI, then review it by hand for normalization issues',
+      'Write OpenAPI/GraphQL schema stubs for core endpoints before building either side',
+      'Decide hosting (Vercel/Render/Railway/AWS) based on budget and scaling needs'
+    ],
+    tools:[
+      {name:'Claude / Claude Code', tag:'Schema & API design', why:'Good at proposing a normalized schema from your entity list and generating a consistent OpenAPI spec you can hand to both frontend and backend work.', alt:'ChatGPT, GitHub Copilot Chat'},
+      {name:'dbdiagram.io (+ AI schema gen)', tag:'Schema visualization', why:'Turns a text schema into a visual ER diagram fast, which catches relationship mistakes AI text descriptions hide.', alt:'DrawSQL'},
+    ],
+    prompts:[
+      'Here is my entity list: [paste]. Design a normalized PostgreSQL schema for a multi-category e-commerce store, including products, variants, inventory, orders, order items, customers, and carts. Flag any denormalization tradeoffs.',
+      'Generate an OpenAPI 3.0 spec for these endpoints: product listing with filters, product detail, cart operations, checkout, and order history. Use realistic request/response shapes.'
+    ],
+    bestPractices:['Write the API contract before either frontend or backend code exists','Model inventory and variants as separate concerns from day one','Pick boring, well-documented tech — this is not where to experiment solo'],
+    mistakes:['Letting frontend and backend drift out of sync because there was no written contract','Over-engineering for scale you don\'t have yet (premature microservices)','Choosing a database because it\'s trendy rather than because it fits relational commerce data'],
+    outputs:['Finalized schema (ERD)','OpenAPI/GraphQL contract','Architecture diagram','Hosting decision'],
+    tips:'Ask Claude Code to generate migration files directly from the finalized schema — don\'t hand-write boilerplate migrations.'
+  },
+  {
+    id:'backend', num:'03', time:'2–3 weeks',
+    title:'Backend Development',
+    desc:'Build the API, business logic, and data layer that everything else depends on.',
+    objectives:[
+      'Implement CRUD for products, categories, variants, and inventory',
+      'Build cart and order logic, including stock reservation',
+      'Set up authentication and role-based access (customer vs admin)',
+      'Write automated tests for critical business logic'
+    ],
+    tasks:[
+      'Scaffold API routes/controllers from the OpenAPI spec',
+      'Implement inventory decrement logic with race-condition handling',
+      'Build order state machine (pending → paid → fulfilled → shipped → refunded)',
+      'Add input validation and error handling across all endpoints'
+    ],
+    tools:[
+      {name:'Claude Code', tag:'Implementation', why:'Handles large multi-file backend scaffolding well and can follow your OpenAPI contract precisely, keeping implementation consistent with the design stage.', alt:'GitHub Copilot, Cursor'},
+      {name:'Cursor', tag:'In-IDE pairing', why:'Tight iteration loop for business logic that needs frequent small corrections, like the order state machine.', alt:'Windsurf, Claude Code'},
+    ],
+    prompts:[
+      'Implement an Express + Postgres endpoint for reserving inventory on checkout that safely handles concurrent requests for the same SKU. Explain the locking strategy you chose.',
+      'Write an order state machine (pending, paid, fulfilled, shipped, cancelled, refunded) as a TypeScript module with guarded transitions and unit tests.'
+    ],
+    bestPractices:['Handle inventory race conditions explicitly — don\'t assume single-user testing reflects production','Validate every input at the API boundary, not just in the UI','Write tests for money and stock logic before anything else'],
+    mistakes:['Trusting AI-generated payment or inventory logic without manually reviewing every branch','Skipping idempotency on checkout endpoints (leads to duplicate orders)','No automated tests on the order state machine — this is where refunds go wrong later'],
+    outputs:['Working REST/GraphQL API','Passing test suite for core flows','Seeded database with sample catalog'],
+    tips:'Ask the AI to generate the unhappy-path tests (out of stock, expired session, double-submit) — these are the ones humans forget to write.'
+  },
+  {
+    id:'frontend', num:'04', time:'2–3 weeks',
+    title:'Frontend Development',
+    desc:'Build the storefront customers actually shop in — catalog browsing, cart, and account areas.',
+    objectives:[
+      'Build catalog browsing with category and attribute filtering',
+      'Build product detail pages with variant selection',
+      'Build cart, wishlist, and customer account areas',
+      'Ensure responsive layout and fast perceived performance'
+    ],
+    tasks:[
+      'Scaffold pages/components against the finalized API contract',
+      'Implement filter/sort UI for multi-category browsing',
+      'Build variant selector (size/color) with live stock and price updates',
+      'Add loading, empty, and error states for every data-dependent view'
+    ],
+    tools:[
+      {name:'Claude Code / v0', tag:'Component generation', why:'Fast at generating consistent component sets (product card, filter sidebar, cart drawer) that share a design system rather than looking ad hoc.', alt:'Cursor, Bolt.new'},
+      {name:'Claude in Chrome', tag:'Visual QA', why:'Useful for reviewing rendered pages against your design intent and catching layout issues across breakpoints.', alt:'BrowserStack manual review'},
+    ],
+    prompts:[
+      'Build a responsive product listing page in React + Tailwind with category filters, price range, and sort, consuming this API shape: [paste endpoint response]. Include loading and empty states.',
+      'Build a product detail page with a variant selector (color/size) that updates price, image, and stock availability without a full page reload.'
+    ],
+    bestPractices:['Design empty and error states as deliberately as the happy path','Keep the component library consistent — don\'t let AI reinvent card styles per page','Test filter/sort logic against a catalog with real edge cases (out-of-stock, zero results)'],
+    mistakes:['No empty-state design (blank screens when filters return zero results)','Inconsistent spacing/typography because components were generated independently over time','Ignoring mobile checkout flow until late — most storefront traffic is mobile'],
+    outputs:['Storefront UI (browse, PDP, cart, account)','Component library','Responsive layouts verified at 375px–1440px'],
+    tips:'Generate one canonical component (e.g. ProductCard) carefully by hand or with heavy review, then have AI extend the pattern — this keeps visual consistency.'
+  },
+  {
+    id:'payments', num:'05', time:'4–6 days',
+    title:'Payments & Checkout',
+    desc:'The stage with zero tolerance for silent failure — get this reviewed carefully, not just generated fast.',
+    objectives:[
+      'Integrate a payment provider (Stripe or similar)',
+      'Build a reliable checkout flow with clear failure states',
+      'Handle webhooks for payment confirmation asynchronously',
+      'Cover tax and shipping calculation'
+    ],
+    tasks:[
+      'Integrate Stripe Checkout or Payment Intents API',
+      'Build webhook handler for payment success/failure/dispute events',
+      'Implement idempotent order creation tied to payment confirmation',
+      'Add tax/shipping rate calculation (via provider API or ruleset)'
+    ],
+    tools:[
+      {name:'Claude Code', tag:'Integration', why:'Good at implementing Stripe\'s webhook and idempotency patterns correctly when given the official docs as context — but always verify against Stripe\'s current API version.', alt:'GitHub Copilot'},
+      {name:'Stripe\'s own docs/AI assistant', tag:'Source of truth', why:'Payment logic is the one area where you should treat the provider\'s own documentation as more authoritative than a general model\'s memory.', alt:'—'},
+    ],
+    prompts:[
+      'Implement a Stripe webhook handler in Node.js for checkout.session.completed and payment_intent.payment_failed that creates an order idempotently, using the event ID to prevent duplicate processing.',
+      'Review this checkout flow for failure-state gaps: what happens if the payment succeeds but our server is down, or the user closes the tab before redirect?'
+    ],
+    bestPractices:['Always process orders from webhook confirmation, never from client-side redirect alone','Make every payment-related operation idempotent','Test with Stripe\'s test cards for every failure mode, not just the happy path'],
+    mistakes:['Creating orders on client-side success callback instead of server-side webhook confirmation','No idempotency key, leading to duplicate charges on retry','Forgetting to handle disputes/refunds in the order state machine'],
+    outputs:['Working checkout with test-mode payments','Webhook handler with idempotency','Documented failure-state behavior'],
+    tips:'Manually review 100% of AI-generated payment code line by line — this is the one place where "looks right" isn\'t good enough.'
+  },
+  {
+    id:'admin', num:'06', time:'1–1.5 weeks',
+    title:'Admin & Inventory Management',
+    desc:'The backstage tools you\'ll live in daily — product management, order fulfillment, and inventory.',
+    objectives:[
+      'Build admin views for product/category/inventory management',
+      'Build order fulfillment workflow for the admin side',
+      'Add basic reporting (sales, low stock, top products)'
+    ],
+    tasks:[
+      'Build product CRUD UI with bulk actions and CSV import',
+      'Build order queue with status updates and fulfillment tracking',
+      'Add low-stock alerts and simple sales dashboard'
+    ],
+    tools:[
+      {name:'Claude Code', tag:'Admin scaffolding', why:'Admin panels are repetitive CRUD-heavy UI — exactly where AI-generated scaffolding saves the most time relative to customer-facing polish work.', alt:'Retool (no-code alternative), v0'},
+    ],
+    prompts:[
+      'Build an admin product management table with inline editing, bulk category assignment, and CSV bulk import/export, using this schema: [paste].',
+      'Design a simple sales dashboard showing revenue by day, top 10 products, and low-stock items, given this order and inventory schema.'
+    ],
+    bestPractices:['Reuse component patterns from the storefront where possible to save time','Gate admin routes behind proper role checks, not just hidden UI','Add CSV import validation — bad bulk imports corrupt catalogs fast'],
+    mistakes:['Admin routes with no server-side auth check (UI-only hiding)','No audit trail on inventory/price changes','Building admin polish before it\'s needed — this area can stay rough longer than storefront'],
+    outputs:['Admin product/order management UI','Basic sales dashboard','CSV import/export'],
+    tips:'Spend less design effort here than on the storefront — admin tools need to be functional and safe, not beautiful.'
+  },
+  {
+    id:'testing', num:'07', time:'4–6 days',
+    title:'Testing & QA',
+    desc:'Catch the failures that only show up under real usage patterns, before customers find them.',
+    objectives:[
+      'Cover critical paths with automated tests (checkout, cart, auth)',
+      'Manually test cross-browser and mobile responsiveness',
+      'Load-test checkout for concurrent requests'
+    ],
+    tasks:[
+      'Write end-to-end tests for browse → cart → checkout → order confirmation',
+      'Run manual QA pass on mobile Safari and Chrome',
+      'Basic load test on checkout and product-listing endpoints'
+    ],
+    tools:[
+      {name:'Claude Code', tag:'Test generation', why:'Effective at writing Playwright/Cypress e2e tests from a described user flow, including realistic edge cases like session expiry mid-checkout.', alt:'GitHub Copilot'},
+      {name:'Playwright', tag:'E2E framework', why:'Reliable cross-browser testing that pairs well with AI-generated test scaffolds.', alt:'Cypress'},
+    ],
+    prompts:[
+      'Write Playwright end-to-end tests covering: browsing with filters, adding to cart, guest checkout, and viewing order confirmation. Include a test for an expired cart session.',
+      'Suggest a basic load-testing plan for a checkout endpoint expecting up to 50 concurrent users at launch, using k6 or similar.'
+    ],
+    bestPractices:['Test the unhappy paths as deliberately as the happy ones','Run a real mobile device test pass, not just responsive dev tools','Load-test before launch, even at small expected scale'],
+    mistakes:['Only testing on desktop Chrome during development','Treating "it works on my machine" as sufficient QA','Skipping load testing because traffic is expected to be low at first'],
+    outputs:['E2E test suite','QA checklist results','Load test report'],
+    tips:'Ask AI to generate a QA checklist from your PRD\'s user flows — it catches flows you forgot to test manually.'
+  },
+  {
+    id:'deploy', num:'08', time:'3–5 days',
+    title:'Deployment & Launch Readiness',
+    desc:'Ship it — with monitoring in place so you know the moment something breaks.',
+    objectives:[
+      'Set up CI/CD for automated deploys',
+      'Configure production environment, secrets, and backups',
+      'Add error monitoring and uptime alerts',
+      'Prepare launch checklist and rollback plan'
+    ],
+    tasks:[
+      'Set up CI pipeline (test → build → deploy) on your chosen host',
+      'Configure environment secrets, database backups, and SSL',
+      'Add error monitoring (e.g. Sentry) and uptime checks',
+      'Write a rollback plan and a day-one launch checklist'
+    ],
+    tools:[
+      {name:'Claude Code', tag:'CI/CD scripting', why:'Good at writing GitHub Actions workflows and deployment scripts tailored to your specific host and stack.', alt:'GitHub Copilot'},
+      {name:'Sentry', tag:'Error monitoring', why:'Catches production errors in real time — essential for a solo founder who can\'t manually watch logs.', alt:'LogRocket, Datadog'},
+    ],
+    prompts:[
+      'Write a GitHub Actions workflow that runs tests, builds, and deploys to [Vercel/Render] on merge to main, with a manual approval step for production.',
+      'Create a pre-launch checklist for a solo-founder e-commerce site covering backups, monitoring, SSL, legal pages, and rollback plan.'
+    ],
+    bestPractices:['Automate deploys but keep a manual approval gate for production','Test your backup restore process before you need it, not after','Set up alerts before launch, not after the first incident'],
+    mistakes:['No tested backup/restore process','Deploying without error monitoring in place','No rollback plan when a bad deploy reaches production'],
+    outputs:['CI/CD pipeline','Monitoring and alerting configured','Launch checklist completed'],
+    tips:'Do a dry-run rollback before launch day — knowing the process works is worth more than having it documented.'
+  }
+];
+
+const stackPicks = [
+  {role:'Planning & specs', pick:'Claude'},
+  {role:'Backend implementation', pick:'Claude Code'},
+  {role:'In-IDE pairing', pick:'Cursor'},
+  {role:'Frontend scaffolding', pick:'Claude Code / v0'},
+  {role:'Visual QA', pick:'Claude in Chrome'},
+  {role:'Payments reference', pick:'Stripe docs (source of truth)'},
+  {role:'E2E testing', pick:'Playwright + Claude Code'},
+  {role:'Error monitoring', pick:'Sentry'}
+];
+
+const learnResources = [
+  'Stripe\'s official e-commerce integration guide (payments & webhooks)',
+  '"Designing Data-Intensive Applications" — for schema and consistency tradeoffs',
+  'Next.js / your framework\'s official docs — treat as more current than any model\'s memory',
+  'web.dev — performance and Core Web Vitals for storefront pages'
+];
+const communities = [
+  'r/SaaS and r/ecommerce — founder-level build discussions',
+  'Indie Hackers — solo founder build logs and post-mortems',
+  'Your framework\'s Discord (e.g. Next.js, Remix) for implementation-specific help'
+];
+const keywords = ['stripe checkout webhook idempotency','postgres schema multi-variant products','next.js e-commerce storefront','inventory race condition handling','solo founder launch checklist','playwright e2e checkout test'];
+const futureOps = [
+  'AI-generated product descriptions and SEO metadata from structured attributes',
+  'Automated low-stock reordering suggestions based on sales velocity',
+  'AI-assisted customer support triage for order status questions',
+  'Dynamic pricing/promo suggestions based on cart abandonment patterns',
+  'Automated visual regression testing on every deploy'
+];
+const extraPromptsList = [
+  'Given this order history schema, suggest 5 metrics I should track weekly as a solo founder to catch problems early.',
+  'Review my checkout flow description and identify where a customer could lose their cart contents unexpectedly.',
+  'Suggest a lightweight customer support setup for a solo founder that won\'t require a full-time support hire at launch.'
+];
+
+let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"tasks":{},"notes":{},"bookmarks":{}}');
+function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); updateProgress(); }
+
+function totalTasks(){ return stages.reduce((a,s)=>a+s.tasks.length,0); }
+function doneTasks(){ return Object.values(state.tasks).filter(Boolean).length; }
+function updateProgress(){
+  const pct = Math.round((doneTasks()/totalTasks())*100) || 0;
+  document.getElementById('progressFill').style.width = pct+'%';
+  document.getElementById('progressPct').textContent = pct+'%';
+  stages.forEach(s=>{
+    const allDone = s.tasks.every((_,i)=>state.tasks[s.id+'-'+i]);
+    const pill = document.querySelector('.stage-pill[data-id="'+s.id+'"]');
+    if(pill) pill.classList.toggle('done', allDone);
+  });
+}
+
+function renderNav(){
+  const nav = document.getElementById('stageNav');
+  nav.innerHTML = stages.map(s=>`<button class="stage-pill" data-id="${s.id}" onclick="document.getElementById('${s.id}').scrollIntoView()">${s.num} ${s.title}</button>`).join('') +
+    `<button class="stage-pill" onclick="document.getElementById('summary').scrollIntoView()">SUMMARY</button>`;
+}
+
+function renderStages(){
+  const c = document.getElementById('stagesContainer');
+  c.innerHTML = stages.map(s=>`
+    <section class="stage" id="${s.id}">
+      <div class="stage-head">
+        <div>
+          <div class="stage-num">STAGE ${s.num}</div>
+          <h2>${s.title}</h2>
+        </div>
+        <div class="stage-time">${s.time}</div>
+      </div>
+      <p class="stage-desc">${s.desc}</p>
+
+      <div class="grid2">
+        <div>
+          <div class="block">
+            <h4>Objectives</h4>
+            <ul>${s.objectives.map(o=>`<li>${o}</li>`).join('')}</ul>
+          </div>
+          <div class="block">
+            <h4>Tasks <span style="font-weight:400; text-transform:none; letter-spacing:0;">(click to check off)</span></h4>
+            <ul class="task-list">
+              ${s.tasks.map((t,i)=>`<li data-key="${s.id}-${i}" onclick="toggleTask('${s.id}-${i}', this)" class="${state.tasks[s.id+'-'+i]?'checked':''}">${t}</li>`).join('')}
+            </ul>
+          </div>
+          <div class="block">
+            <h4>Best AI tools for this stage</h4>
+            ${s.tools.map(t=>`
+              <div class="tool-card">
+                <div class="tname">${t.name} <span class="tag">${t.tag}</span></div>
+                <div class="twhy">${t.why}</div>
+                <div class="talt"><strong>Alternatives:</strong> ${t.alt}</div>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div class="block">
+            <h4>Prompt examples</h4>
+            ${s.prompts.map((p,i)=>`
+              <div class="prompt-box">${p}<button class="copy-btn" onclick="copyPrompt(this)">Copy</button></div>`).join('')}
+          </div>
+          <div class="block">
+            <h4>Best practices</h4>
+            <ul>${s.bestPractices.map(b=>`<li>${b}</li>`).join('')}</ul>
+          </div>
+          <div class="block">
+            <h4>Common mistakes</h4>
+            <ul>${s.mistakes.map(m=>`<li class="mistake">${m}</li>`).join('')}</ul>
+          </div>
+          <div class="block">
+            <h4>Expected outputs</h4>
+            <div class="outputs-row">${s.outputs.map(o=>`<span class="chip">${o}</span>`).join('')}</div>
+          </div>
+          <div class="block">
+            <h4>Efficiency tip</h4>
+            <p style="font-size:13.5px; color:var(--text-dim); margin:0;">${s.tips}</p>
+          </div>
+          <div class="block">
+            <h4>Notes <button class="bookmark-btn ${state.bookmarks[s.id]?'active':''}" onclick="toggleBookmark('${s.id}', this)">${state.bookmarks[s.id]?'★':'☆'}</button></h4>
+            <textarea class="notes-area" placeholder="Jot down decisions or blockers for this stage..." onchange="saveNote('${s.id}', this.value)">${state.notes[s.id]||''}</textarea>
+          </div>
+        </div>
+      </div>
+    </section>
+  `).join('');
+}
+
+function toggleTask(key, el){
+  state.tasks[key] = !state.tasks[key];
+  el.classList.toggle('checked');
+  save();
+}
+function saveNote(id, val){ state.notes[id] = val; save(); }
+function toggleBookmark(id, el){
+  state.bookmarks[id] = !state.bookmarks[id];
+  el.classList.toggle('active');
+  el.textContent = state.bookmarks[id] ? '★' : '☆';
+  save();
+}
+function copyPrompt(btn){
+  const text = btn.parentElement.textContent.replace('Copy','').trim();
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='Copied'; setTimeout(()=>btn.textContent='Copy',1200);
+  });
+}
+
+function renderSummary(){
+  document.getElementById('stackGrid').innerHTML = stackPicks.map(s=>`
+    <div class="stack-item"><div class="role">${s.role}</div><div class="pick">${s.pick}</div></div>
+  `).join('');
+  document.getElementById('learnList').innerHTML = learnResources.map(l=>`<li>${l}</li>`).join('');
+  document.getElementById('commList').innerHTML = communities.map(l=>`<li>${l}</li>`).join('');
+  document.getElementById('kwList').innerHTML = keywords.map(k=>`<span class="kw">${k}</span>`).join('');
+  document.getElementById('futureList').innerHTML = futureOps.map(f=>`<li>${f}</li>`).join('');
+  document.getElementById('extraPrompts').innerHTML = extraPromptsList.map(p=>`<div class="prompt-box">${p}<button class="copy-btn" onclick="copyPrompt(this)">Copy</button></div>`).join('');
+}
+
+document.getElementById('themeToggle').addEventListener('click', ()=>{
+  const body = document.body;
+  const isDark = body.getAttribute('data-theme') === 'dark';
+  body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('themeToggle').textContent = isDark ? 'Dark mode' : 'Light mode';
+});
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  if(confirm('Clear all progress, notes, and bookmarks?')){
+    state = {tasks:{}, notes:{}, bookmarks:{}};
+    save();
+    renderStages();
+  }
+});
+
+renderNav();
+renderStages();
+renderSummary();
+updateProgress();
+</script>
+</body>
+</html>
