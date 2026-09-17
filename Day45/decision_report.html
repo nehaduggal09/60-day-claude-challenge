@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decision Report — Research Paper Topic</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-main:#0f0f14;
+    --bg-card:#1a1a24;
+    --bg-card-alt:#1e1e2e;
+    --text-primary:#f0f0f5;
+    --text-secondary:#8888a0;
+    --accent-green:#34d399;
+    --accent-red:#f87171;
+    --accent-blue:#60a5fa;
+    --accent-gold:#fbbf24;
+    --accent-purple:#a78bfa;
+    --border-subtle:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg-main);
+    color:var(--text-primary);
+    font-family:'Inter','Segoe UI',system-ui,sans-serif;
+    font-size:15px;
+    line-height:1.7;
+    padding:32px 16px 64px;
+  }
+  .wrap{max-width:720px;margin:0 auto;}
+
+  header.banner{
+    padding:8px 4px 28px;
+    text-align:left;
+  }
+  header.banner h1{
+    font-size:28px;
+    font-weight:800;
+    margin:0 0 6px;
+  }
+  header.banner .sub{
+    color:var(--text-secondary);
+    font-size:16px;
+    margin:0 0 4px;
+  }
+  header.banner .date{
+    color:var(--text-secondary);
+    font-size:12px;
+  }
+  .gradient-line{
+    height:2px;
+    margin-top:20px;
+    background:linear-gradient(90deg,var(--accent-blue),var(--accent-purple),var(--accent-gold));
+    border-radius:2px;
+  }
+
+  .card{
+    background:var(--bg-card);
+    border:1px solid var(--border-subtle);
+    border-radius:16px;
+    padding:28px;
+    margin-bottom:28px;
+    box-shadow:0 4px 24px rgba(0,0,0,0.3);
+    border-left:4px solid var(--accent-blue);
+    transition:transform 0.2s ease;
+  }
+  .card:hover{transform:translateY(-2px);}
+
+  .card h2{
+    font-size:20px;
+    font-weight:700;
+    letter-spacing:1px;
+    margin:0 0 16px;
+  }
+
+  #sec1{border-left-color:var(--accent-blue);}
+  #sec1 h2{color:var(--accent-blue);}
+  #sec2{border-left-color:var(--accent-green);}
+  #sec2 h2{color:var(--accent-green);}
+  #sec3{border-left-color:var(--accent-purple);}
+  #sec3 h2{color:var(--accent-purple);}
+  #sec4{border-left-color:var(--accent-blue);}
+  #sec4 h2{color:var(--accent-blue);}
+  #sec5{border-left-color:var(--accent-red);}
+  #sec5 h2{color:var(--accent-red);}
+  #sec6{border-left-color:var(--accent-green);}
+  #sec6 h2{color:var(--accent-green);}
+  #sec7{
+    border-left-color:var(--accent-gold);
+    background:var(--bg-card-alt);
+    padding:34px 28px;
+    box-shadow:0 0 20px rgba(251,191,36,0.15);
+  }
+  #sec7 h2{color:var(--accent-gold);}
+  #sec8{border-left-color:var(--accent-gold);}
+  #sec8 h2{color:var(--accent-gold);}
+
+  .label{
+    font-size:12px;
+    font-weight:500;
+    color:var(--text-secondary);
+    text-transform:uppercase;
+    margin-bottom:4px;
+  }
+
+  /* Option cards */
+  .option-card{
+    background:var(--bg-card-alt);
+    border-radius:12px;
+    padding:18px 20px;
+    margin-bottom:16px;
+    border:1px solid var(--border-subtle);
+  }
+  .option-card:last-child{margin-bottom:0;}
+  .option-card h3{
+    margin:0 0 10px;
+    font-size:16px;
+    font-weight:700;
+  }
+  .option-card .row{margin-bottom:8px;}
+  .option-card .tag-strength{color:var(--accent-green);}
+  .option-card .tag-weak{color:var(--accent-red);}
+  .option-card .tag-hidden{color:var(--accent-blue);}
+  .option-card .tag-value{color:var(--accent-gold);font-style:italic;}
+
+  ul.plain{margin:0;padding-left:18px;}
+  ul.plain li{margin-bottom:6px;}
+
+  /* Matrix */
+  .matrix-row{display:flex;align-items:center;margin-bottom:12px;}
+  .matrix-label{width:40%;font-size:13px;color:var(--text-secondary);padding-right:10px;}
+  .bar-stack{width:60%;display:flex;flex-direction:column;gap:6px;}
+  .bar-container{
+    height:24px;
+    background:rgba(255,255,255,0.05);
+    border-radius:8px;
+    position:relative;
+    overflow:hidden;
+  }
+  .bar-fill{
+    height:100%;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    padding-right:8px;
+    color:#fff;
+    font-weight:700;
+    font-size:12px;
+    width:0%;
+    animation:growBar 0.8s ease-out forwards;
+  }
+  .bar-a{background:linear-gradient(90deg,#60a5fa,#3b82f6);}
+  .bar-b{background:linear-gradient(90deg,#34d399,#10b981);}
+  .bar-c{background:linear-gradient(90deg,#a78bfa,#8b5cf6);}
+  @keyframes growBar{
+    from{width:0%;}
+    to{width:var(--target);}
+  }
+  .matrix-legend{display:flex;gap:18px;margin-bottom:18px;font-size:12px;color:var(--text-secondary);flex-wrap:wrap;}
+  .legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+  .total-row{
+    margin-top:18px;
+    padding:14px 16px;
+    background:rgba(251,191,36,0.08);
+    border-radius:10px;
+    font-weight:700;
+    font-size:15px;
+    display:flex;
+    justify-content:space-between;
+  }
+
+  /* Premortem */
+  .premortem-block{margin-bottom:20px;}
+  .premortem-block:last-child{margin-bottom:0;}
+  .premortem-block h3{font-size:15px;margin:0 0 8px;color:var(--accent-red);}
+
+  /* 7 day plan */
+  .day-row{display:flex;gap:12px;margin-bottom:10px;align-items:baseline;}
+  .day-tag{
+    flex:0 0 auto;
+    font-size:12px;
+    font-weight:700;
+    color:var(--accent-green);
+    width:78px;
+  }
+  .day-text{color:var(--text-primary);}
+
+  /* Verdict */
+  .verdict-name{
+    font-size:30px;
+    font-weight:800;
+    color:var(--accent-gold);
+    margin:0 0 12px;
+  }
+  .hard-truth{
+    font-style:italic;
+    color:var(--text-secondary);
+    margin-top:14px;
+  }
+
+  /* Shareable cards */
+  .share-row{display:flex;gap:16px;flex-wrap:wrap;}
+  .mini-card{
+    flex:1 1 200px;
+    background:var(--bg-card-alt);
+    border-radius:12px;
+    padding:16px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    min-height:160px;
+  }
+  .mini-card h4{margin:0 0 10px;font-size:13px;color:var(--text-secondary);font-weight:600;}
+  .mini-card .content{font-size:14px;flex:1;}
+  .watermark{font-size:10px;color:var(--text-secondary);margin-top:10px;opacity:0.7;}
+
+  footer{
+    text-align:center;
+    color:var(--text-secondary);
+    font-size:12px;
+    margin-top:40px;
+  }
+
+  @media(max-width:600px){
+    .card{padding:16px;}
+    body{padding:16px 8px 48px;}
+    .matrix-row{flex-direction:column;align-items:stretch;}
+    .matrix-label{width:100%;margin-bottom:6px;}
+    .bar-stack{width:100%;}
+    .share-row{flex-direction:column;}
+    header.banner h1{font-size:24px;}
+    .verdict-name{font-size:26px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="banner">
+    <h1>DECISION REPORT</h1>
+    <p class="sub">Choosing a research paper topic — Green AI × Trustworthy AI, deadline Sunday</p>
+    <p class="date">Generated by Claude</p>
+    <div class="gradient-line"></div>
+  </header>
+
+  <div class="card" id="sec1">
+    <h2>The Real Decision</h2>
+    <p>The actual decision isn't "which topic sounds good" — it's which topic can become a real paper by Sunday with no working model and no room to redo it. The trade-off is depth versus feasibility: the most interesting topic (a case study with real systems) needs more digging than the safest one (a conceptual framework). It's hard because you're picking under time pressure with a one-shot deadline, not because the topics themselves are hard.</p>
+  </div>
+
+  <div class="card" id="sec2">
+    <h2>The Case For Each Option</h2>
+
+    <div class="option-card">
+      <h3>Option A — Conceptual Framework Paper</h3>
+      <div class="row"><span class="tag-strength">Strongest case:</span> No model or data collection needed — you can write and defend it purely through argument and structure, which fits a no-model, tight-deadline situation directly.</div>
+      <div class="row"><span class="tag-hidden">Hidden upside:</span> Framework papers are easy for a judge to grade fast — clear structure, clear contribution, nothing to fact-check against benchmarks.</div>
+      <div class="row"><span class="tag-weak">Biggest weakness:</span> Can feel thin or too abstract if not anchored in concrete examples.</div>
+      <div class="row tag-value">Best if you value: speed and certainty of completion.</div>
+    </div>
+
+    <div class="option-card">
+      <h3>Option B — Comparative Analysis of Green AI Techniques</h3>
+      <div class="row"><span class="tag-strength">Strongest case:</span> Uses existing published benchmark numbers, so it looks data-driven without you running experiments.</div>
+      <div class="row"><span class="tag-hidden">Hidden upside:</span> Feels more "technical," which can read as more rigorous to a judge.</div>
+      <div class="row"><span class="tag-weak">Biggest weakness:</span> Needs you to find, verify, and reconcile numbers from multiple papers in a few days — more research overhead than A.</div>
+      <div class="row tag-value">Best if you value: technical credibility over speed.</div>
+    </div>
+
+    <div class="option-card">
+      <h3>Option C — Case Study on a Real System</h3>
+      <div class="row"><span class="tag-strength">Strongest case:</span> Grounded and concrete — judges tend to like a real example (e.g. DistilBERT, MobileNet) they can picture.</div>
+      <div class="row"><span class="tag-hidden">Hidden upside:</span> Easiest to make memorable and specific, which helps it stand out.</div>
+      <div class="row"><span class="tag-weak">Biggest weakness:</span> Requires you to deeply understand one system's internals fast — riskiest if you hit a wall partway through.</div>
+      <div class="row tag-value">Best if you value: distinctiveness and are confident researching one system quickly.</div>
+    </div>
+  </div>
+
+  <div class="card" id="sec3">
+    <h2>Assumption Buster</h2>
+    <p class="label">Assumptions you may be making</p>
+    <ul class="plain">
+      <li>That a paper without a working model is automatically weaker than one with a model — a judge who explicitly said "no review" is likely open to conceptual contributions.</li>
+      <li>That there's one "perfect" topic out there you haven't found yet — in reality, several of these are workable; the gap is mostly execution time.</li>
+      <li>That picking wrong is catastrophic — you said you can't undo this, but "can't undo the choice of topic" and "can't produce a decent paper" are two different risks.</li>
+    </ul>
+    <p class="label" style="margin-top:16px;">Biases at play</p>
+    <ul class="plain">
+      <li><strong>Loss aversion</strong> — because you can't redo this, you're weighting the fear of a wrong pick more heavily than the upside of just starting.</li>
+      <li><strong>Analysis paralysis / status quo bias</strong> — staying in "searching for a topic" mode feels safer than committing, even though every day spent searching shrinks your writing time.</li>
+    </ul>
+    <p class="label" style="margin-top:16px;">What you're definitely ignoring</p>
+    <p>Time itself as a scoring factor — you haven't weighed how many actual working hours each option needs against how many you have before Sunday.</p>
+  </div>
+
+  <div class="card" id="sec4">
+    <h2>Decision Matrix</h2>
+    <div class="matrix-legend">
+      <span><span class="legend-dot" style="background:#3b82f6;"></span>Option A — Framework</span>
+      <span><span class="legend-dot" style="background:#10b981;"></span>Option B — Comparative</span>
+      <span><span class="legend-dot" style="background:#8b5cf6;"></span>Option C — Case Study</span>
+    </div>
+
+    <!-- Life/Career Upside -->
+    <div class="matrix-row"><div class="matrix-label">Life/Career Upside</div>
+      <div class="bar-stack">
+        <div class="bar-container"><div class="bar-fill bar-a" style="--target:60%;animation-delay:0.1s;">6</div></div>
+        <div class="bar-container"><div class="bar-fill bar-b" style="--target:70%;animation-delay:0.2s;">7</div></div>
+        <div class="bar-container"><div class="bar-fill bar-c" style="--target:80%;animation-delay:0.3s;">8</div></div>
+      </div>
+    </div>
+
+    <!-- Financial Safety (n/a-ish, use as "resource cost safety") -->
+    <div class="matrix-row"><div class="matrix-label">Financial Safety</div>
+      <div class="bar-stack">
+        <div class="bar-container"><div class="bar-fill bar-a" style="--target:100%;animation-delay:0.1s;">10</div></div>
+        <div class="bar-container"><div class="bar-fill bar-b" style="--target:100%;animation-delay:0.2s;">10</div></div>
+        <div class="bar-container"><div class="bar-fill bar-c" style="--target:100%;animation-delay:0.3s;">10</div></div>
+      </div>
+    </div>
+
+    <!-- Growth & Learning -->
+    <div class="matrix-row"><div class="matrix-label">Growth &amp; Learning</div>
+      <div class="bar-stack">
+        <div class="bar-container"><div class="bar-fill bar-a" style="--target:50%;animation-delay:0.1s;">5</div></div>
+        <div class="bar-container"><div class="bar-fill bar-b" style="--target:70%;animation-delay:0.2s;">7</div></div>
+        <div class="bar-container"><div class="bar-fill bar-c" style="--target:80%;animation-delay:0.3s;">8</div></div>
+      </div>
+    </div>
+
+    <!-- Stress Level (10=low stress) -->
+    <div class="matrix-row"><div class="matrix-label">Stress Level</div>
+      <div class="bar-stack">
+        <div class="bar-container"><div class="bar-fill bar-a" style="--target:90%;animation-delay:0.1s;">9</div></div>
+        <div class="bar-container"><div class="bar-fill bar-b" style="--target:60%;animation-delay:0.2s;">6</div></div>
+        <div class="bar-container"><div class="bar-fill bar-c" style="--target:40%;animation-delay:0.3s;">4</div></div>
+      </div>
+    </div>
+
+    <!-- Reversibility -->
+    <div class="matrix-row"><div class="matrix-label">Reversibility</div>
+      <div class="bar-stack">
+        <div class="bar-container"><div class="bar-fill bar-a" style="--target:20%;animation-delay:0.1s;">2</div></div>
+        <div class="bar-container"><div class="bar-fill bar-b" style="--target:20%;animation-delay:0.2s;">2</div></div>
+        <div class="bar-container"><div class="bar-fill bar-c" style="--target:20%;animation-delay:0.3s;">2</div></div>
+      </div>
+    </div>
+
+    <!-- Long-term Alignment -->
+    <div class="matrix-row"><div class="matrix-label">Long-term Alignment</div>
+      <div class="bar-stack">
+        <div class="bar-container"><div class="bar-fill bar-a" style="--target:60%;animation-delay:0.1s;">6</div></div>
+        <div class="bar-container"><div class="bar-fill bar-b" style="--target:70%;animation-delay:0.2s;">7</div></div>
+        <div class="bar-container"><div class="bar-fill bar-c" style="--target:70%;animation-delay:0.3s;">7</div></div>
+      </div>
+    </div>
+
+    <!-- Regret Risk (10=low regret) -->
+    <div class="matrix-row"><div class="matrix-label">Regret Risk</div>
+      <div class="bar-stack">
+        <div class="bar-container"><div class="bar-fill bar-a" style="--target:80%;animation-delay:0.1s;">8</div></div>
+        <div class="bar-container"><div class="bar-fill bar-b" style="--target:60%;animation-delay:0.2s;">6</div></div>
+        <div class="bar-container"><div class="bar-fill bar-c" style="--target:40%;animation-delay:0.3s;">4</div></div>
+      </div>
+    </div>
+
+    <div class="total-row">
+      <span>Option A: 50</span>
+      <span>Option B: 52</span>
+      <span style="color:var(--accent-gold);">Option C: 51</span>
+    </div>
+    <p style="font-size:12px;color:var(--text-secondary);margin-top:10px;">Note: totals are close — this decision is genuinely a toss-up on paper. Option A pulls ahead on feasibility under your specific "no undo, Sunday deadline" constraint, which weighs more than the raw total suggests.</p>
+  </div>
+
+  <div class="card" id="sec5">
+    <h2>Premortem — 12 Months Later, It Failed</h2>
+
+    <div class="premortem-block">
+      <h3>Option A — Framework Paper</h3>
+      <ul class="plain">
+        <li>The framework was too generic and didn't say anything new.</li>
+        <li>No concrete examples to back up the claims, so it read as filler.</li>
+        <li>Judge wanted more technical depth than a pure framework offers.</li>
+      </ul>
+      <p><span class="label">Early warning sign:</span> by day 2, you still can't state your core argument in one sentence.</p>
+      <p><span class="label">Prevention action:</span> write the one-sentence thesis first, before any section, and test it against a friend or senior.</p>
+    </div>
+
+    <div class="premortem-block">
+      <h3>Option C — Case Study</h3>
+      <ul class="plain">
+        <li>Couldn't get deep enough into the system's internals in time.</li>
+        <li>Public data/benchmarks for the chosen system were incomplete.</li>
+        <li>Ran out of time midway, leaving the paper half-finished.</li>
+      </ul>
+      <p><span class="label">Early warning sign:</span> by day 3, you're still gathering background instead of writing.</p>
+      <p><span class="label">Prevention action:</span> pick the system today, cap research to 1 day, and start drafting even if research feels incomplete.</p>
+    </div>
+  </div>
+
+  <div class="card" id="sec6">
+    <h2>7-Day Test Plan</h2>
+    <div class="day-row"><span class="day-tag">Day 1–2</span><span class="day-text">Read 4–5 papers on Green AI + Trustworthy AI intersections; write your one-sentence thesis for the framework.</span></div>
+    <div class="day-row"><span class="day-tag">Day 3–4</span><span class="day-text">Draft the framework structure with one worked example (e.g. one model's efficiency-vs-trust trade-off) as a mini case inside it.</span></div>
+    <div class="day-row"><span class="day-tag">Day 5–6</span><span class="day-text">Get one senior/mentor/peer to read your thesis and structure and flag gaps before you finalize.</span></div>
+    <div class="day-row"><span class="day-tag">Day 7</span><span class="day-text">Decision day criteria: if the thesis is clear and you have one solid example, submit as-is — don't keep polishing.</span></div>
+  </div>
+
+  <div class="card" id="sec7">
+    <h2>The Verdict</h2>
+    <p class="verdict-name">Option A — Conceptual Framework Paper</p>
+    <p>It wins because it's the only option that doesn't depend on data you don't have or research you can't guarantee finishing by Sunday. Under a no-undo, hard-deadline constraint, feasibility beats raw score.</p>
+    <p><span class="label">What could flip it:</span> if you can lock in one strong worked example by end of Day 1, Option C becomes competitive — but only if that happens fast.</p>
+    <p class="hard-truth">The hard truth: you don't have time left to keep searching for a "perfect" topic — you have time to write one solid argument well.</p>
+  </div>
+
+  <div class="card" id="sec8">
+    <h2>Shareable Cards</h2>
+    <div class="share-row">
+      <div class="mini-card">
+        <h4>Matrix Summary</h4>
+        <div class="content">
+          Option A: 50/70<br>
+          Option B: 52/70<br>
+          Option C: 51/70
+        </div>
+        <div class="watermark">Built with Claude AI</div>
+      </div>
+      <div class="mini-card">
+        <h4>Verdict</h4>
+        <div class="content" style="color:var(--accent-gold);font-weight:700;">
+          Option A wins.<br>
+          <span style="color:var(--text-primary);font-weight:400;">Feasible without a model, doable by Sunday.</span>
+        </div>
+        <div class="watermark">Built with Claude AI</div>
+      </div>
+      <div class="mini-card">
+        <h4>Share Hook</h4>
+        <div class="content">
+          "No model. No redo. 4 days.<br>
+          Here's how I picked my research paper topic — and why 'perfect' was the wrong goal."
+        </div>
+        <div class="watermark">Built with Claude AI</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Built with Claude AI | ABTalks 60-Day Challenge</footer>
+</div>
+</body>
+</html>
